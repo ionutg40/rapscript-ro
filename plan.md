@@ -7,9 +7,9 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | Fază BMad | Status |
 |---|---|
 | 1 - Analysis (brief) | ✅ aprobat → `docs/brief.md` |
-| 2 - Planning (PRD) | ⏭️ **următorul pas** |
-| 2 - UX design | ⬜ |
-| 3 - Architecture | ⬜ |
+| 2 - Planning (PRD) | ✅ final → `docs/prd.md` (10 FR, FR-7 în v1) |
+| 2 - UX design | ⏭️ **următorul pas** (design ales: Underground Brutalist) |
+| 3 - Architecture | ⬜ (recomandat: vanilla + Pages) |
 | 3 - Epics & Stories | ⬜ |
 | 3 - Implementation readiness | ⬜ |
 | 4 - Sprint planning + build | ⬜ |
