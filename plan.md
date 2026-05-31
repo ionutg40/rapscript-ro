@@ -14,16 +14,17 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | 3 - Implementation readiness | ⬜ |
 | 4 - Sprint planning + build | ⬜ |
 
-## Groundwork (research front-loaded)
+## Groundwork (research front-loaded) — ✅ gata (2026-05-31)
 
-Rulat ca workflow înainte de PRD, ca să avem date reale:
+Rulat ca workflow `rapscript-ro-groundwork` (12 agenți) înainte de PRD. Rezultate în `docs/groundwork.md`:
 
-- [ ] Word bank RO seed (3 niveluri, generat + verificat)
-- [ ] Direcție de design aleasă (3 concepte → juriu)
-- [ ] Decizie stack (pentru începător + deploy gratuit)
-- [ ] Schiță epics cap-coadă
+- [x] Word bank RO seed — 422 cuvinte (136/154/132) → `assets/wordbank.json`
+- [x] Direcție de design aleasă — Underground Brutalist „Subsol" (juriu 8.5/10)
+- [x] Decizie stack recomandată — vanilla HTML/CSS/JS + GitHub Pages
+- [x] Schiță epics cap-coadă (7 epics)
+- [ ] **Verificare adversarială groundwork** — în curs (agenți de verificare)
 
-_(rezultatele se toarnă aici când workflow-ul termină)_
+> Aceste rezultate sunt INPUT pentru fazele BMad, nu sar peste pași: word bank = asset, design → faza UX, stack → faza Arhitectură, epics → faza Epics.
 
 ## Principiu de atac
 
