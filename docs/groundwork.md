@@ -56,3 +56,34 @@ Vibe: pivniță de bloc, foaie xeroxată prinsă în pioneze, cuvântul izbește
 7. Deploy final + `gotchas.md` (SM-2) + share
 
 > Detaliul complet pe stories e în output-ul workflow-ului; se rafinează oficial în `bmad-create-epics-and-stories`.
+
+## 5. Verificare adversarială (2026-05-31, workflow `rapscript-ro-verify`, 20 agenți)
+
+Verdict: **groundwork solid pentru PRD** (confidence high, claim-uri verificate empiric pe git/gh/python). Corecții:
+
+### Aplicate deja (în asset)
+- ✅ Typo: `eshatologie` → `escatologie` (formă DEX corectă).
+- ✅ Dedup cross-nivel: cele 5 cuvinte din avansat∩profesionist (anxietate, deznădejde, melancolie, uitare, îndoială) scoase din profesionist (rămân în avansat, unde aparțin).
+- ✅ **Counts reale: 136 / 154 / 127 = 417** (NU 155/133/424 din output-ul workflow-ului — acela e driftat; sursa de adevăr = `assets/wordbank.json`).
+- ✅ Confirmat: 0 duplicate intra-nivel, 0 cedile greșite, diacritice comma-below 100% corecte.
+
+### Decizii pentru fazele BMad (de respectat în PRD/UX/Arhitectură/Epics)
+- **Format date (Arhitectură):** `words.js` cu `const WORD_BANK = {...}` încărcat prin `<script>`, **derivat determinist din `wordbank.json`** (NU a doua copie tastată). Motiv: `fetch('assets/wordbank.json')` pe `file://` pică pe CORS → strică promisiunea „dublu-click rulează".
+- **Epic 1 (Epics): repo-ul EXISTĂ deja** (2 commits, main↔origin, tree clean). Scoate din plan `gh repo create`, `git branch -M main`, „scaffold gol", „fără commituri". Real: adaugi cele 4 fișiere noi (`index.html`, `style.css`, `app.js`, `words.js`) peste structura existentă + al 3-lea commit + push + activează Pages. `.gitignore` și `README.md` există deja.
+- **Fullscreen (PRD constraint + Arhitectură):** Fullscreen API e **efectiv no-op pe iPhone** pentru elemente arbitrare (nu doar „limitat"). Tratează ca enhancement: feature-detect + ascunde butonul când lipsește; degradare la pseudo-fullscreen CSS (`position:fixed;inset:0`) + „Add to Home Screen".
+- **.nojekyll:** adaugă fișier gol în root de la walking skeleton (Pages rulează Jekyll implicit, ignoră silențios fișiere/foldere cu `_`).
+- **Accesibilitate (UX/design):** `#FF3B00` pe hârtie = 3.14:1, `#8A8578` = 3.23:1 → pică AA pe text normal. Regulă: portocaliu + gri DOAR pe text mare-bold sau forme, niciodată pe text mic. Label vertical → cerneală `#0A0A0A` (17.38:1, AAA).
+- **Animație în 3 straturi (design):** Strat 1 MVP = un cuvânt intră cu `translateY+opacity` ~150ms (fără fază de ieșire suprapusă, fără flash/shake). Strat 2 = flash-invert. Strat 3 = overshoot + page-shake + STAMP CUT complet. STAMP CUT complet NU e acceptance criteria v1.
+- **Textura xerox: scoasă din v1** (juriul i-a dat fezabilitate 6/10). Identitatea brutalist supraviețuiește fără grime. Dacă se vrea: un PNG noise tileable opacity ~4%, zero JS/SVG.
+- **Epic 6 — contradicție rezolvată:** NU „fade sau slide" (conceptul interzice explicit fade/blur). Tranziția = STAMP CUT pe straturi.
+- ✅ **Diacritice Archivo Black: confirmat OK** (verificat cu fonttools — are glyph-uri comma-below dedicate + feature `locl` RO auto-corect). Doar pune `lang="ro"` pe `<html>`. Coborât din „risc" în „rezolvat".
+
+### Re-leveling fin (deferat la editare, NU blocant)
+~10 cuvinte borderline de mutat între niveluri (ex. `prăjitură`→avansat; `trecut/tron/umbră/viitor/presimțire`→mediu; `concluzie/actualitate/extaz/neliniște`→avansat). Judecăți de conținut, nu erori.
+
+### Gotchas tehnice (pentru `gotchas.md`, Epic 7)
+- Căi RELATIVE sub subfolder Pages (`style.css`, nu `/style.css`) — altfel 404 alb.
+- `.nojekyll` gol în root oprește Jekyll.
+- Nume fișiere strict lowercase ASCII (server Pages e case-sensitive, local nu).
+- Prima activare Pages 1-3 min + Fastly cache agresiv → hard-refresh/incognito înainte de panică.
+- Activare Pages scriptat: `gh api --method POST repos/ionutg40/rapscript-ro/pages --input -` cu `{"source":{"branch":"main","path":"/"}}` (scope `repo` suficient); fallback manual Settings>Pages dacă dă 409/422.

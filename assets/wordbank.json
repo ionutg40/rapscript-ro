@@ -6,9 +6,13 @@
     "counts": {
       "incepator": 136,
       "avansat": 154,
-      "profesionist": 132
+      "profesionist": 127
     },
-    "note": "Seed word bank. Dedup facut in interiorul fiecarui nivel. Overlap cross-nivel pastrat (e o judecata de leveling, de rezolvat la implementare)."
+    "note": "Seed word bank verificat adversarial (20 agenti). Dedup intra+cross-nivel facut. Re-leveling fin (~10 cuvinte borderline) ramane pt faza de editare/implementare.",
+    "fixes_2026-05-31": [
+      "typo: eshatologie -> escatologie (DEX)",
+      "scos 5 cuvinte cross-nivel din profesionist (raman in avansat): anxietate, deznădejde, melancolie, uitare, îndoială"
+    ]
   },
   "rubrics": {
     "incepator": "Nivel incepator: cuvinte foarte comune, concrete, usor de imaginat si de rimat - substantive zilnice (obiecte, oameni, locuri, mancare, actiuni simple), de preferat 1-3 silabe. Diacritice corecte. Fara englezisme, nume proprii, duplicate sau cuvinte ofensatoare.",
@@ -325,7 +329,6 @@
       "anterioritate",
       "antinomie",
       "antropocentrism",
-      "anxietate",
       "apatie",
       "aporie",
       "apriorism",
@@ -345,7 +348,6 @@
       "deducție",
       "demonstrație",
       "determinism",
-      "deznădejde",
       "deșertăciune",
       "dialectică",
       "echivocitate",
@@ -353,7 +355,7 @@
       "empirism",
       "entropie",
       "epistemă",
-      "eshatologie",
+      "escatologie",
       "esențialitate",
       "exterioritate",
       "extaz",
@@ -389,7 +391,6 @@
       "letargie",
       "lemă",
       "meditație",
-      "melancolie",
       "metafizică",
       "modalitate",
       "necesitate",
@@ -436,13 +437,11 @@
       "temporalitate",
       "tăgadă",
       "ubicuitate",
-      "uitare",
       "verificabilitate",
       "verosimilitate",
       "virtualitate",
       "vremelnicie",
-      "zădărnicie",
-      "îndoială"
+      "zădărnicie"
     ]
   }
 }

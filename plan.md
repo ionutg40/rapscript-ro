@@ -18,11 +18,11 @@ Tracker de proiect. Urmărim pașii BMad Method.
 
 Rulat ca workflow `rapscript-ro-groundwork` (12 agenți) înainte de PRD. Rezultate în `docs/groundwork.md`:
 
-- [x] Word bank RO seed — 422 cuvinte (136/154/132) → `assets/wordbank.json`
+- [x] Word bank RO seed — **417 cuvinte (136/154/127)** după verificare → `assets/wordbank.json`
 - [x] Direcție de design aleasă — Underground Brutalist „Subsol" (juriu 8.5/10)
 - [x] Decizie stack recomandată — vanilla HTML/CSS/JS + GitHub Pages
 - [x] Schiță epics cap-coadă (7 epics)
-- [ ] **Verificare adversarială groundwork** — în curs (agenți de verificare)
+- [x] **Verificare adversarială groundwork** — 20 agenți; verdict: solid pt PRD. Corecții în `docs/groundwork.md` §5
 
 > Aceste rezultate sunt INPUT pentru fazele BMad, nu sar peste pași: word bank = asset, design → faza UX, stack → faza Arhitectură, epics → faza Epics.
 
