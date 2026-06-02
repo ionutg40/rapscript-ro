@@ -1,5 +1,8 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+lastStep: 8
+status: 'complete'
+completedAt: '2026-06-02'
 inputDocuments:
   - docs/brief.md
   - docs/addendum.md

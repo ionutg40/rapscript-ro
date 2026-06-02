@@ -9,10 +9,15 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | 1 - Analysis (brief) | ✅ aprobat → `docs/brief.md` |
 | 2 - Planning (PRD) | ✅ final → `docs/prd.md` (10 FR, FR-7 în v1) |
 | 2 - UX design | ✅ **gata** → `docs/DESIGN.md` (Nocturn) + `docs/EXPERIENCE.md` + `docs/ux-decisions.md` |
-| 3 - Architecture | 🟡 **următorul pas** (vanilla + Pages; draft pas-5 recuperat în `docs/architecture.step5-draft.md`) |
-| 3 - Epics & Stories | ⬜ |
-| 3 - Implementation readiness | ⬜ |
+| 3 - Architecture | ✅ **COMPLETE** → `docs/architecture.md` (8 pași, D1-D18, status READY FOR IMPLEMENTATION) |
+| 3 - Epics & Stories | 🟡 **următorul pas** (`bmad-create-epics-and-stories`) |
+| 3 - Implementation readiness | ⬜ (`bmad-check-implementation-readiness`) |
 | 4 - Sprint planning + build | ⬜ |
+
+> **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
+> + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
+> Verdict unanim: gata de construit. **Primul task la build:** verifică Fraunces cu fonttools (D18/E4)
+> înainte de orice CSS; apoi walking skeleton live (D17). Ship-blockers = D1-D10 + D17; restul are slack.
 
 > **Notă reluare (2026-06-02):** sesiunea precedentă a lucrat UX + arhitectură D1-D18 + draft pas-5
 > DOAR în context — nimic salvat pe disc. Singurul recuperat e textul pasului 5 (lipit de user →
