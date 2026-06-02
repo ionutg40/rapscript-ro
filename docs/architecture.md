@@ -137,8 +137,10 @@ NU `gh repo create` (repo-ul există).
 - **D3 ▲** — `words.js` derivat determinist din JSON printr-un `gen_words.py` care: citește
   **`d['levels']`** (ignoră `meta`/`rubrics`), sortează cheile (diff curat), **validează banca**
   (niveluri ne-goale, ≥2 cuvinte, fără dups intra+cross-nivel) și **refuză să scrie pe date stricate**
-  (date proaste = ne-livrabile), scrie `WORD_BANK` (cele 3 array-uri) + `WORD_BANK_META =
-  {count, hash, generated}` (`count` = suma nivelurilor, derivat NU din `meta.counts`), header
+  (date proaste = ne-livrabile), scrie **`WORD_BANK` ca OBIECT** `{ incepator:[…], avansat:[…],
+  profesionist:[…] }` (NU array plat — `state.level` îl indexează direct) + `WORD_BANK_META =
+  {count, hash, generated}` (`count` = suma nivelurilor, derivat NU din `meta.counts`; **`hash` =
+  sha256 pe JSON-ul canonic al `levels`**, sortat — același calcul în `--check`), header
   `// AUTO-GENERAT din wordbank.json — NU EDITA` **(E1)**. NU atinge `index.html` (un script care
   rescrie fișierul sursă principal cu regex = footgun pe fișier ne-regenerabil — scos). Mod **`--check`**:
   recalculează hash din `wordbank.json`, compară cu META din `words.js`, exit non-zero la mismatch
@@ -155,6 +157,11 @@ NU `gh repo create` (repo-ul există).
   adăugate ca starea de eroare să fie exprimabilă prin `render`, nu prin scrieri DOM ad-hoc). Fără
   clase, fără framework de state. *(Lista de câmpuri e descriptivă — vezi Tier 2; contractul e „un
   singur obiect state = sursă unică", nu cele exact-N chei.)*
+  **Tipuri & inițiale:** `level` = **cheie string** (`'incepator'`/`'avansat'`/`'profesionist'`), NU
+  index numeric — match cheile `WORD_BANK`. Inițiale la boot: `word=''`, `ready=false`, `playing=false`,
+  `error=false`, `intervalId=null`, `level`/`intervalMs` din localStorage sau defaults.
+  **`WORD_BANK` = obiect** `{ incepator:[…], avansat:[…], profesionist:[…] }` (NU array plat) — `state.level`
+  îl indexează direct.
 - **D6 ▲** — `pickWord(bankArray, currentWord)`: primește **array-ul nivelului** (caller-ul indexează
   `WORD_BANK[state.level]`), random fără repetare imediată (FR-3) cu **retry mărginit**
   (`for i<10 && pick===currentWord`), comparat pe **valoare string**; pe array de **exact 2** → pick
@@ -180,17 +187,21 @@ NU `gh repo create` (repo-ul există).
   și user-ul n-are Node). Verificarea în 3 straturi, toate fără runtime nou: (1) **sanity bancă** în
   `gen_words.py` (Python, build-time, refuză date proaste — D3); (2) **teste funcții pure**
   (`pickWord`, `clampDelay`) **în browser via `?test=1`** în index.html (bloc inline, zero Node);
-  (3) **freshness gate** `gen_words.py --check`. **Hook portabil:** hook-ul trăiește în `.githooks/
-  pre-commit` **commited** (NU `.git/hooks/`, care nu se clonează) + `git config core.hooksPath
-  .githooks` (un rând de setup/clone) + un **GitHub Action** care rulează `--check` pe push (singurul
-  gate ne-sărit, rulează pe serverul GitHub indiferent ce face local). Documentează ce NU acoperă
+  (3) **freshness gate** `gen_words.py --check`. **Gate-ul real = GitHub Action** care rulează `--check`
+  pe push (ne-sărit, pe serverul GitHub, indiferent ce face local). Pre-commit hook-ul local
+  (`.githooks/pre-commit` commited + `core.hooksPath .githooks`) e **opțional/convenience** (feedback mai
+  rapid), NU obligatoriu — și se adaugă DUPĂ primul ship (sequencing). Documentează ce NU acoperă
   (timer/render → `console.assert` dev-aid). *(Scos `validate.js` ca fișier Node separat.)*
 - **D12 ▲** — Anti-race prin `state.ready` (inițial `false`); un singur `render()` citește `ready`
   → placeholder `–` dimmed + `btn-play-pause` disabled până ready. Fără `disabled` ad-hoc (respectă D7).
+  **Primul cuvânt:** după validare → `ready=true`, boot face `state.word = pickWord(WORD_BANK[state.level],
+  '')` ca scena să arate un cuvânt în starea ready/paused (NU goală — EXPERIENCE cere un cuvânt vizibil
+  după load). Play pornește timer-ul de acolo (D9).
 - **D13** — `clampDelay()` clampează viteza 2–12s pe slider ȘI pe valoarea citită din localStorage (FR-5).
 - **D14 ▲** — Persistență: `localStorage` cheie `rapscript:settings` = `{ v: 1, level, speedSec }`
   (schema versionată din ziua 0); absență/parse-fail → defaults; **validează `level` contra băncii**
-  încărcate (fallback default); **wrap și `setItem`** fail-silent (Safari private mode aruncă) **(E2)**;
+  încărcate — dacă `level` nu e cheie validă în `WORD_BANK`, **fallback `'incepator'`** (match inițial);
+  **wrap și `setItem`** fail-silent (Safari private mode aruncă) **(E2)**;
   `speedSec` non-numeric → tratat ca absent. **Slider, două canale (rezolvă contradicția cu
   EXPERIENCE):** evenimentul `input` → DOAR actualizare text-valoare live (prin `render`); evenimentul
   `change` → `clampDelay` + `saveSettings` + (dacă `playing`) `restartTimer` (persistă + repornește o
@@ -452,6 +463,12 @@ Skeleton live + `gen_words.py` **simplu** (citește JSON → scrie words.js) ÎN
 pre-commit hook, CI Action DOAR după ce s-a livrat primul cuvânt pe ecran (lasă durerea „uitat
 regenerat" să apară o dată). `gotchas.md` se umple PE PARCURS, nu retroactiv (SM-2). **Primul task
 absolut:** verifică Fraunces cu fonttools (D18/E4) înainte de orice CSS.
+
+> **⚠️ Cum citești documentul ăsta (anti-over-implementation):** e dens fiindcă a trecut prin multe
+> runde de stres-test — dar **nu toate regulile sunt egale.** Ship-blockers reale: **D1-D10 + D17**
+> (date, inimă, deploy). Restul (fullscreen D15, motion D16, a11y-extra, hook/CI, `?test=1`) au slack —
+> le adaugi pe rând, după ce inima merge live. Implementează ca un începător care livrează, NU ca și
+> cum fiecare linie e lege. Contractele (Tier 1) le respecți; Convențiile (Tier 2) le ghicești relaxat.
 
 ## Architecture Validation Results
 
