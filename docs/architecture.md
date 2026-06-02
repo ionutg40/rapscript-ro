@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 inputDocuments:
   - docs/brief.md
   - docs/addendum.md
@@ -96,8 +96,10 @@ Tehnic: zero-build = zero dependințe de versiune, zero `npm install` care eșue
 **Architectural Decisions Provided by Starter:** N/A — le luăm noi explicit în pașii următori.
 
 **Dependențe externe (singurele):**
-- Fonturi web Google Fonts: **Fraunces** (serif hero) + **IBM Plex Mono** (UI). Ambele verificate
-  2026-06-02: suportă RO/Latin Extended. Build-check: randare comma-below `ș/ț` cu `lang="ro"`.
+- Fonturi: **Fraunces** (serif hero) + **IBM Plex Mono** (UI), **self-host woff2** (D18). 2026-06-02:
+  **suport de limbă RO confirmat doar la nivel de catalog Google Fonts** — randarea reală comma-below
+  `ș/ț` pe woff2-ul subset NU e încă verificată cu fonttools (verificarea din groundwork §81 era pe
+  Archivo Black, fontul mort). ⚠️ **Primul task de implementare** = fonttools pe Fraunces real (vezi D18/E4).
 - Niciun pachet npm, niciun framework, niciun runtime.
 
 **Note:** „Project initialization" ca primă story = adăugarea fișierelor + `.nojekyll` + activare Pages,
@@ -137,8 +139,8 @@ NU `gh repo create` (repo-ul există).
   (niveluri ne-goale, ≥2 cuvinte, fără dups intra+cross-nivel) și **refuză să scrie pe date stricate**
   (date proaste = ne-livrabile), scrie `WORD_BANK` (cele 3 array-uri) + `WORD_BANK_META =
   {count, hash, generated}` (`count` = suma nivelurilor, derivat NU din `meta.counts`), header
-  `// AUTO-GENERAT din wordbank.json — NU EDITA` **(E1)**, **și rescrie `?v=<hash>` în `index.html`**
-  (owner unic al words.js ȘI al hash-ului din script tag — zero pas manual). Mod **`--check`**:
+  `// AUTO-GENERAT din wordbank.json — NU EDITA` **(E1)**. NU atinge `index.html` (un script care
+  rescrie fișierul sursă principal cu regex = footgun pe fișier ne-regenerabil — scos). Mod **`--check`**:
   recalculează hash din `wordbank.json`, compară cu META din `words.js`, exit non-zero la mismatch
   (prinde „uitat regenerat" ȘI „editat de mână"). Singurul scriitor al `words.js`; `words.js`
   **commited** (nu gitignored — Pages îl servește).
@@ -155,14 +157,16 @@ NU `gh repo create` (repo-ul există).
   singur obiect state = sursă unică", nu cele exact-N chei.)*
 - **D6 ▲** — `pickWord(bankArray, currentWord)`: primește **array-ul nivelului** (caller-ul indexează
   `WORD_BANK[state.level]`), random fără repetare imediată (FR-3) cu **retry mărginit**
-  (`for i<10 && pick===currentWord`), comparat pe **valoare string**; dacă array-ul are 1 cuvânt →
-  acceptă repetarea (zero buclă infinită). Parametrul de excludere îl face testabil în `validate.js`.
+  (`for i<10 && pick===currentWord`), comparat pe **valoare string**; pe array de **exact 2** → pick
+  determinist celălalt (garantat ≠); pe array de 1 → acceptă repetarea (zero buclă infinită).
+  Parametrul de excludere îl face testabil prin `?test=1` (D11).
 - **D7** — Regula de aur (anti-drift): logica MUTĂ doar `state`; toate scrierile DOM trec prin
-  `render()` / `renderWord()`. Niciun handler nu scrie direct în DOM. *(Lecția centrală a proiectului.)*
+  `render(state)` (un singur punct, fără `renderWord()` separat — vezi Implementation Patterns). Niciun
+  handler nu scrie direct în DOM. *(Lecția centrală a proiectului.)*
 - **D8** — Event model: handlere cu nume (`handlePlayClick`…), legate cu `addEventListener` la fundul
   `app.js`. Fără `onclick` inline, fără arrow anonime în handlere.
 - **D9 ▲** — Un singur `setInterval`; `state.intervalId`; **start idempotent** (`clearInterval`
-  necondiționat înainte de fiecare start — fără timere duble la dublu-click play); `renderWord()`
+  necondiționat înainte de fiecare start — fără timere duble la dublu-click play); `render()`
   **sincron la play** (primul cuvânt apare la t=0, nu după un interval); schimbare speed/level la
   `playing` → clear+restart (resetează ceasul, documentat); speed în pauză NU pornește interval.
 
@@ -176,15 +180,21 @@ NU `gh repo create` (repo-ul există).
   și user-ul n-are Node). Verificarea în 3 straturi, toate fără runtime nou: (1) **sanity bancă** în
   `gen_words.py` (Python, build-time, refuză date proaste — D3); (2) **teste funcții pure**
   (`pickWord`, `clampDelay`) **în browser via `?test=1`** în index.html (bloc inline, zero Node);
-  (3) **freshness gate** `gen_words.py --check` rulat de un **pre-commit hook**. Documentează ce NU
-  acoperă (timer/render → `console.assert` dev-aid). *(Scos `validate.js` ca fișier Node separat.)*
+  (3) **freshness gate** `gen_words.py --check`. **Hook portabil:** hook-ul trăiește în `.githooks/
+  pre-commit` **commited** (NU `.git/hooks/`, care nu se clonează) + `git config core.hooksPath
+  .githooks` (un rând de setup/clone) + un **GitHub Action** care rulează `--check` pe push (singurul
+  gate ne-sărit, rulează pe serverul GitHub indiferent ce face local). Documentează ce NU acoperă
+  (timer/render → `console.assert` dev-aid). *(Scos `validate.js` ca fișier Node separat.)*
 - **D12 ▲** — Anti-race prin `state.ready` (inițial `false`); un singur `render()` citește `ready`
   → placeholder `–` dimmed + `btn-play-pause` disabled până ready. Fără `disabled` ad-hoc (respectă D7).
 - **D13** — `clampDelay()` clampează viteza 2–12s pe slider ȘI pe valoarea citită din localStorage (FR-5).
 - **D14 ▲** — Persistență: `localStorage` cheie `rapscript:settings` = `{ v: 1, level, speedSec }`
   (schema versionată din ziua 0); absență/parse-fail → defaults; **validează `level` contra băncii**
   încărcate (fallback default); **wrap și `setItem`** fail-silent (Safari private mode aruncă) **(E2)**;
-  scrie pe `change`, nu `input` (anti-spam la drag).
+  `speedSec` non-numeric → tratat ca absent. **Slider, două canale (rezolvă contradicția cu
+  EXPERIENCE):** evenimentul `input` → DOAR actualizare text-valoare live (prin `render`); evenimentul
+  `change` → `clampDelay` + `saveSettings` + (dacă `playing`) `restartTimer` (persistă + repornește o
+  dată, anti-spam la drag).
 - **D15** — Fullscreen: feature-detect Fullscreen API; ascunde `btn-fullscreen` dacă lipsește;
   degradare pseudo-fullscreen CSS pe iPhone (FR-8).
 - **D16 ▲** — Motion: tranziție `translateY+opacity ~140ms` (doar transform+opacity); render nou
@@ -194,21 +204,28 @@ NU `gh repo create` (repo-ul există).
 
 - **D17 ▲** — Host: GitHub Pages, branch `main`, path `/`, sub `/rapscript-ro/`. **Căi RELATIVE**
   peste tot (`href="style.css"`, nu `/style.css`). `.nojekyll` gol în root (oprește Jekyll).
-  **Cache-bust** `words.js?v=<hash>` (`<hash>` = `WORD_BANK_META.hash`, NU `count` — edit cu count
-  constant ar servi stale tăcut). Hash-ul din script tag e **rescris de `gen_words.py`** (D3), nu de
-  mână (altfel sync-trap). Pe `file://` `?v=` e no-op; complexitatea există doar pentru Pages.
+  **Fără cache-bust `?v=`** (scos): pe un static de 3 fișiere nu merită un script care editează
+  `index.html`. Pages invalidează cache-ul la fiecare deploy; pentru staleness de browser local =
+  gotcha „hard-refresh/incognito" (groundwork §5). Freshness-ul codului-sursă e garantat de
+  `gen_words.py --check` (D3), nu de query string.
 - **D18 ▲** — **Self-host woff2** (Fraunces serif hero + IBM Plex Mono UI) în `assets/fonts/` via
   `@font-face`, `font-display: swap`; zero request extern (coerent cu D2 offline). **Un singur fișier
   per familie, subset pe AMBELE range-uri latin+latin-ext** (orice cuvânt RO poate avea diacritice →
   range-splitting nu câștigă nimic); nume `fraunces-ro.woff2` / `ibm-plex-mono-ro.woff2` (NU
-  `-latin-ext`, care ar implica felia fără ASCII). Build asertă că glifele `ș ț ă â î` există (E4 =
-  poartă de build). `font-family` consumator are **fallback explicit** (serif / monospace) ca un woff2
-  lipsă să degradeze la text citibil, nu invizibil **(E3)**. `lang="ro"` pe `<html>`.
-  **Criteriu de acceptare gating (E4):** pe site-ul live, cu `lang=ro`, `ș/ț` se randează comma-below
-  (NU sedilă) — verificat, nu presupus. Toată valoarea vizuală depinde de asta (5 Whys).
+  `-latin-ext`, care ar implica felia fără ASCII). `font-family` consumator are **fallback explicit**
+  (serif / monospace) ca un woff2 lipsă să degradeze la text citibil, nu invizibil **(E3)**.
+  `lang="ro"` pe `<html>`.
+  **Criteriu de acceptare gating (E4) — PRIMUL task de implementare, înainte de orice CSS:**
+  toată valoarea vizuală depinde ca Fraunces să randeze `ș/ț` **comma-below** (NU sedilă) (5 Whys).
+  Capcana reală: serif-urile editoriale au comma-below des DOAR prin feature-ul OpenType `locl`, iar
+  `pyftsubset` îl ARUNCĂ dacă nu-l ceri. Deci la subset: cere **code-point-urile direct**
+  (`--unicodes=U+0218-021B,U+0102,U+0103,U+00C2,U+00E2,U+00CE,U+00EE,…`) **+** `--layout-features='*'`
+  (păstrează `locl`). Apoi verifică cu fonttools că `U+0219`/`U+021B` (Scommaaccent/Tcommaaccent) sunt
+  în `cmap`. Dacă lipsesc → **schimbă fontul ACUM**, nu după ce-i scris CSS-ul. E4 = test de glifă
+  RANDATĂ, nu doar prezență code-point.
   **Semnal fail-loud (woff2 404):** un fallback care randează vizibil dar cu sedilă ar înfrânge TĂCUT
-  E4 → la load, `document.fonts.ready`/`.check()` pentru Fraunces; dacă lipsește → `console.warn`
-  (eventual marcaj discret). Mută E4 din „verificat manual" în check rulabil.
+  E4 → la load, `document.fonts.check('12px Fraunces')` (size OBLIGATORIU, altfel fals-negativ); dacă
+  lipsește → `console.warn` (eventual marcaj discret).
 
 ### Decision Impact Analysis
 
@@ -246,8 +263,10 @@ N/A (nu există): DB naming, API endpoints, event systems custom, state libs, re
 **render(state)**
 - Idempotent, citește tot `state`, chemat la finalul handlerului. Un singur punct de scriere DOM —
   NU există `renderWord()` separat (asta-i tot; fără teoreme „unique/no-mid-handler", vezi Tier 2).
+  **Semnătură:** `state` e global de modul; funcția se cheamă `render()` fără argument; „`render(state)`"
+  în doc e shorthand conceptual, nu parametru.
 - Scrie: cuvântul, clasele `is-*` (prin `classList.toggle('is-x', state.x)` — exclusivitate din state),
-  etichetele, `messageEl`.
+  etichetele, **`aria-valuetext` pe slider** (`"<N> secunde"` — a11y floor, EXPERIENCE.md), `messageEl`.
 - **Animă hero DOAR când `state.word` s-a schimbat** (compară cu un `prevWord` render-local) — altfel
   orice render de control (pauză/viteză/nivel) ar re-declanșa tranziția de 140ms = flicker tăcut.
   Restul scrierilor rămân necondiționate/idempotente.
@@ -316,9 +335,28 @@ stările ca sufix (`--color-accent-hover`). Culori + spacing recurent = vars; on
 ### Enforcement
 
 Agenții respectă **Contractele** (Tier 1); Convențiile (Tier 2) sunt default. Comentarii RO scurte,
-DE CE. ARIA: `playBtn` comută `aria-pressed`+`aria-label` (EXPERIENCE.md a11y floor). Hero:
+DE CE. ARIA: `playBtn` comută `aria-pressed`+`aria-label`; slider `aria-valuetext` (EXPERIENCE.md
+a11y floor). **Focus-pe-pauză-hero rămâne în v1** (`tabindex` + anunțat ca text la pauză) — DOAR
+toggle-ul `aria-live` continuu e deferat; nu tăia tot pachetul SR. Hero:
 `overflow-wrap:break-word; hyphens:auto` (cu `lang=ro`) ca un cuvânt RO lung să nu depășească
 viewport-ul îngust sub clamp-floor.
+
+### Tabel de echivalențe nume (DESIGN ↔ HTML ↔ JS)
+
+Închide deriva de denumire între straturi (Paige). Componenta DESIGN.md = clasă/`id` HTML kebab-case;
+ref JS = camelCase + sufix `El`/`Btn`.
+
+| Componentă (DESIGN/EXPERIENCE) | `id`/clasă HTML | Ref JS |
+|---|---|---|
+| hero-word | `id="hero-word"` | `wordEl` |
+| timer-bar | `id="timer-bar"` | `timerBarEl` |
+| btn-play-pause | `id="btn-play-pause"` | `playBtn` |
+| btn-fullscreen | `id="btn-fullscreen"` | `fullscreenBtn` |
+| speed-slider | `id="speed-slider"` | `speedSlider` |
+| level-segment (×3) | `.level-segment[data-level]` în `#level-segments` | `levelSegmentsEl` |
+| message | `id="message"` | `messageEl` |
+
+_Notă serie E: `E5` nu există (retras la consolidare); seria utilă e E1–E4 + E6._
 
 ### Examples
 
@@ -348,11 +386,13 @@ rapscript-ro/
 ├── .gitattributes         # *.woff2 -text -diff (binar safe; altfel LFS/text → 0 bytes pe Pages)
 ├── .gitignore             # + comentariu: words.js e generat dar TREBUIE commited
 ├── README.md              # există
-├── index.html             # <html lang="ro">; <script src="words.js?v=hash"> ÎNAINTE de app.js;
+├── index.html             # <html lang="ro">; <script src="words.js"> ÎNAINTE de app.js;
 │                          #   bloc de teste inline activat prin ?test=1 (pickWord/clampDelay)
 ├── style.css              # :root tokens Nocturn + @font-face + componente (DESIGN.md)
 ├── app.js                 # state, render(), pickWord, clampDelay, handlere, boot
-├── words.js               # AUTO-GENERAT — NU EDITA; COMMITED; gen rescrie și ?v= din index.html
+├── words.js               # AUTO-GENERAT — NU EDITA; COMMITED (Pages îl servește)
+├── .githooks/pre-commit   # commited; rulează gen_words.py --check (git config core.hooksPath .githooks)
+├── .github/workflows/     # CI: gen_words.py --check pe push (gate ne-sărit)
 ├── gen_words.py           # build: levels → WORD_BANK+META; validează+refuză date proaste;
 │                          #   --check freshness; owner words.js ȘI hash index.html (D3/D11)
 ├── assets/
@@ -400,7 +440,56 @@ effect helpers (timer / persistență / fullscreen). Vezi Implementation Pattern
 
 - **Dev:** dublu-click `index.html` (`file://`, fără server). **Teste:** `index.html?test=1` (browser,
   fără Node) rulează asserturile pe `pickWord`/`clampDelay`.
-- **Update bancă:** editezi `wordbank.json` → `python gen_words.py` (validează, scrie `words.js` +
-  rescrie `?v=`) → commit ambele.
-- **Gate:** pre-commit hook rulează `gen_words.py --check` (freshness — prinde uitat-regenerat / editat-de-mână).
+- **Update bancă:** editezi `wordbank.json` → `python gen_words.py` (validează, scrie `words.js`) →
+  commit ambele.
+- **Gate:** pre-commit hook (`.githooks/`) + CI Action rulează `gen_words.py --check` (freshness —
+  prinde uitat-regenerat / editat-de-mână).
 - **Deploy:** push `main` → GitHub Pages servește din root sub `/rapscript-ro/`.
+
+### Sequencing (ordinea de livrare — nu front-loada pipeline-ul)
+
+Skeleton live + `gen_words.py` **simplu** (citește JSON → scrie words.js) ÎNTÂI; adaugă `--check`,
+pre-commit hook, CI Action DOAR după ce s-a livrat primul cuvânt pe ecran (lasă durerea „uitat
+regenerat" să apară o dată). `gotchas.md` se umple PE PARCURS, nu retroactiv (SM-2). **Primul task
+absolut:** verifică Fraunces cu fonttools (D18/E4) înainte de orice CSS.
+
+## Architecture Validation Results
+
+> Validat prin review de **7 agenți** (Winston/Amelia/John/Sally/Mary/Paige + Red Team adversarial).
+> Verdicte: **6× GO / GO-WITH-FIXES, 0× NO-GO.** Toate fix-urile (clarificări/simplificări, nu redesign)
+> aplicate în D-decizii + patterns mai sus.
+
+### Coherence ✅
+Zero conflicte după corecții; contradicțiile prinse de elicitare (renderWord, Node, cache-bust pe
+count, wordbank nested, pickWord, `?v=`/rescriere index.html, onestitate font) — toate rezolvate și
+verificate pe disc. Tier 1/2 separă contractele de stil; meta-principiul „fail loud" leagă D3-META→D4→D10→D12.
+
+### Requirements Coverage ✅
+**FR-1…10** toate cu casă arhitecturală (vezi tabelul FR→structură); **NFR** Portability/Maintainability/
+Privacy/Performance/Accessibility/Reliability toate ancorate. Trasabilitate dublă (Mary): **zero gold-plating**.
+
+### Implementation Readiness ✅
+Decizii complete (D1-D18, fără versiuni — vanilla; font = primul task de verificat). Patterns în două
+tiere + tabel de nume (handoff curat, Paige). Structură completă. Exemple bune/anti-pattern.
+
+### Fix-uri aplicate din review-ul de 7 (toate non-blocante, acum închise)
+- **D18 — onestitate font + E4 ca test de glifă randată** (Red Team): „verificat" corectat; subset cere
+  `U+0218-021B` direct + `locl`; fonttools-check = PRIMUL task.
+- **Scos `?v=` cache-bust + rescrierea `index.html`** de `gen_words.py` (Red Team + John): footgun eliminat.
+- **Hook portabil** `.githooks/` + `core.hooksPath` + CI Action (Winston + Red Team).
+- **Slider `input`/`change`** separat (Amelia + Sally); **`render()` no-arg** clarificat; **`pickWord` len===2**
+  determinist; **`aria-valuetext`** + **focus-pe-pauză v1** (Sally); **tabel nume** + **E5 retras** (Paige);
+  **sequencing** (John); **PRD §100** sync self-host (Mary).
+
+### Architecture Completeness Checklist
+**Requirements Analysis:** [x] context · [x] scale · [x] constraints · [x] cross-cutting
+**Architectural Decisions:** [x] critical (versions N/A) · [x] stack · [x] integration · [x] performance
+**Implementation Patterns:** [x] naming · [x] structure · [x] communication · [x] process
+**Project Structure:** [x] directory · [x] boundaries · [x] integration · [x] FR mapping
+
+### Readiness Assessment
+**Overall Status: READY FOR IMPLEMENTATION** (16/16 `[x]`, zero critical gaps).
+**Confidence:** high — coerență verificată empiric, 2 baterii elicitare (45 findings) + 2 party + Gauntlet
++ review de 7 agenți, toate findings triate/aplicate.
+**First Implementation Priority:** (1) fonttools pe Fraunces (E4) → (2) walking skeleton live (D17,
+index.html gol + `.nojekyll` + Pages) → URL public înainte de logică.

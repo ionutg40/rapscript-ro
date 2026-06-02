@@ -97,7 +97,8 @@ Funcționează pe telefon, desktop și ecran mare.
 - **Accesibilitate.** Contrast WCAG: text citibil pe perechi care trec AA (ink pe bg Nocturn = 17.9:1, verificat). Accentul purple `#8B7BFF` (5.96:1) și griurile dim DOAR pe text mare-bold sau forme, niciodată pe text mic. Vezi `docs/DESIGN.md` › Colors + `docs/validation-report.md`.
 - **Reliability.** Refuzul fullscreen (ex. iOS) nu crapă aplicația. Un nivel ales rămâne stabil până la schimbare.
 - **Maintainability.** Datele (word bank) separate de logică; `words.js` derivat determinist din `assets/wordbank.json`, nu copie tastată manual.
-- **Privacy.** Local-only. Zero network în afară de fonturile web. Fără cont, fără cloud, fără tracking.
+- **Privacy.** Local-only. **Zero network deloc** — fonturile sunt self-host woff2 (arhitectura D18 a
+  întărit de la „fonturile web"/Google Fonts la self-host: zero request extern). Fără cont, cloud, tracking.
 - **Portability.** Merge la dublu-click pe `index.html` (fără server) ȘI live pe GitHub Pages (căi relative).
 
 ## 5. Success Metrics
