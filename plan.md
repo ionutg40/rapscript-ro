@@ -12,14 +12,21 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | 3 - Architecture | ✅ **COMPLETE** → `docs/architecture.md` (8 pași, D1-D18, status READY FOR IMPLEMENTATION) |
 | 3 - Epics & Stories | ✅ **COMPLETE** → `docs/epics.md` (5 epics, 16 stories cu AC, FR1-10 acoperite) |
 | 3 - Implementation readiness | ✅ **READY** → `docs/implementation-readiness-report-2026-06-02.md` (0 blockers, 3 findings low) |
-| 4 - Build | 🟢 **ÎN CURS** — Epic 1 ✅ LIVE (`https://ionutg40.github.io/rapscript-ro/`) |
+| 4 - Build | ✅ **LIVRAT** — toate 5 epics live (`https://ionutg40.github.io/rapscript-ro/`) |
 
 **Build progress:**
 - Epic 1 ✅ — 1.1 (Fraunces verificat) · 1.2 (schelet live) · 1.3 (fonturi self-host).
 - Epic 2 ✅ — 2.1 (`gen_words.py`→`words.js` 417) · 2.2 (încărcat live + guard) · 2.3 (CI freshness gate = success).
 - Epic 3 ✅ LIVE — `app.js`: state, render() unic, pickWord no-repeat (testat 2000×), timer idempotent.
-- Epic 4 ✅ LIVE — controale: play/pauză (+Space), slider viteză 2-12s, selector nivel (delegation), persistență localStorage. Default paused. **FR1-7 + FR10 live.**
-- Următor: **Epic 5** (polish: Nocturn complet, responsive, fullscreen FR8, motion, a11y floor, deploy final + gotchas). `gotchas.md`: 4 lecții (țintă ≥8).
+- Epic 4 ✅ LIVE — controale: play/pauză (+Space), slider viteză 2-12s, selector nivel (delegation), persistență localStorage. Default paused.
+- Epic 5 ✅ LIVE — Nocturn complet, timer-bar, motion la schimbare cuvânt, fullscreen (FR8), responsive, a11y (focus-pe-pauză, aria, reduced-motion).
+
+## 🏁 v1 LIVRAT (2026-06-02)
+
+**Toate FR1-FR10 live · NFR-uri acoperite · SM-1 (live + inimă) PASS · SM-2 (`gotchas.md` 8 lecții) PASS.**
+Live: `https://ionutg40.github.io/rapscript-ro/`. Rămâne **SM-3 (soft):** fasty folosește app-ul câteva
+minute la un freestyle real — verificarea finală vizuală/interacțiune (animații, fullscreen, timer-bar)
+care cere ochi de om/browser, nu curl.
 
 > **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
 > + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
