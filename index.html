@@ -9,7 +9,10 @@
 </head>
 <body>
   <main class="stage">
-    <h1 id="hero-word" class="hero-word">–</h1>
+    <div class="hero">
+      <h1 id="hero-word" class="hero-word" tabindex="-1">–</h1>
+      <div class="timer-bar" aria-hidden="true"><div id="timer-fill" class="timer-bar__fill"></div></div>
+    </div>
     <div class="deck">
       <div class="controls">
         <button id="btn-play-pause" class="btn" type="button" aria-pressed="false">▶ pornește</button>
@@ -22,6 +25,7 @@
           <button class="level-segment" type="button" data-level="avansat">avansat</button>
           <button class="level-segment" type="button" data-level="profesionist">profesionist</button>
         </span>
+        <button id="btn-fullscreen" class="btn btn-icon" type="button" aria-label="ecran complet" title="ecran complet">⛶</button>
       </div>
       <p id="message" class="message">se încarcă cuvintele…</p>
     </div>

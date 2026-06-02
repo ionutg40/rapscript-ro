@@ -60,6 +60,16 @@ body {
   padding: var(--space-md);
 }
 
+/* zona-erou: cuvânt + timer-bar, centrate (optical center ușor peste mijloc) */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: 6vh; /* optical center ~42% */
+  width: 100%;
+}
+
 /* hero serif editorial — fallback serif dacă woff2 lipsește (degradare citibilă, nu invizibil) */
 .hero-word {
   font-family: "Fraunces", Georgia, "Times New Roman", serif;
@@ -69,7 +79,38 @@ body {
   letter-spacing: -0.01em;
   overflow-wrap: break-word;
   hyphens: auto;
+  max-width: 100%;
+  outline: none; /* focus-pe-pauză e gestionat de :focus-visible global, nu vrem inel mereu */
 }
+
+/* motion: intrare crispă DOAR la schimbarea cuvântului (retrigger din JS) */
+.hero-word.is-entering { animation: word-in 140ms ease-out; }
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* timer-bar: linie subțire care se umple pe durata intervalului; îngheață la pauză */
+.timer-bar {
+  width: min(60vw, 420px);
+  height: 3px;
+  background: var(--color-surface-2);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.timer-bar__fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 9999px;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: timer-fill var(--interval, 4000ms) linear forwards;
+  animation-play-state: paused; /* rulează doar când body.is-playing */
+}
+body.is-playing .timer-bar__fill { animation-play-state: running; }
+@keyframes timer-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.btn-icon { padding: 10px 14px; color: var(--color-ink-dim); }
 
 /* puntea de jos: controale + mesaj */
 .deck {
@@ -127,4 +168,14 @@ body {
   color: var(--color-ink-dim);
   letter-spacing: 0.12em;
   min-height: 1.2em;
+}
+
+/* fullscreen: puntea se retrage, rămâne doar cuvântul (FR8) */
+body.is-fullscreen .deck { display: none; }
+body.is-fullscreen .hero { padding-bottom: 0; }
+
+/* reduced-motion: fără animații (a11y, NFR2) */
+@media (prefers-reduced-motion: reduce) {
+  .hero-word.is-entering { animation: none; }
+  .timer-bar__fill { animation: none; transform: scaleX(0); }
 }

@@ -37,3 +37,22 @@ dropped" e inofensiv. Mono are nevoie de 2 fișiere (400+500) — un singur woff
 deși e în commit**. Nu re-push. Verifică run-ul corect: `gh run list` → așteaptă
 `pages build and deployment` să fie `completed/success` (`gh run watch <id>`), abia apoi fișierul nou
 e servit. La noi ~1-2 min după push.
+
+### 5. Retrigger animație CSS = remove + reflow + restore
+O animație CSS NU repornește dacă doar reaplici aceeași clasă. Trucul: `el.classList.remove('x');
+void el.offsetWidth; el.classList.add('x');` (sau pe `style.animation`: `'none'` → reflow → `''`).
+Folosit la hero (intrare la fiecare cuvânt nou) și la timer-bar (umplere de la 0 pe fiecare interval).
+
+### 6. `render()` nu scrie `value` pe slider când e în drag
+Dacă `render()` rescrie `slider.value` în timp ce userul trage de el (`document.activeElement === slider`),
+îi smucește thumb-ul. Regulă: readout-ul live citește slider-ul în drag; `state.intervalMs` se scrie pe
+`change`, nu pe `input`. `render` scrie `value` DOAR dacă slider-ul nu e `activeElement`.
+
+### 7. Fullscreen: feature-detect + listener `fullscreenchange`
+`document.documentElement.requestFullscreen` lipsește pe iPhone pentru elemente arbitrare → ascunde
+butonul (`hidden=true`), nu-l lăsa mort (FR8). Esc/ieșirea nativă NU cheamă handler-ul tău → ai NEVOIE
+de `document.addEventListener('fullscreenchange', ...)` ca să sincronizezi starea/eticheta.
+
+### 8. localStorage aruncă pe `setItem` în Safari private (nu doar pe parse)
+În modul privat Safari, `localStorage.setItem` aruncă `QuotaExceededError`. Wrap-uiește ȘI scrierea,
+nu doar `JSON.parse` la citire; fail-silent → app-ul merge pe defaults (NFR Reliability).

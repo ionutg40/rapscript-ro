@@ -21,7 +21,7 @@ const state = {
 };
 
 // ---- Refs DOM (cache o dată) ----
-let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl;
+let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
 
@@ -83,8 +83,15 @@ function render() {
   }
   playBtn.disabled = false;
 
-  wordEl.textContent = state.word;
-  prevWord = state.word;
+  // cuvântul: scrie + animă DOAR la schimbare (anti-flicker, D16)
+  if (state.word !== prevWord) {
+    wordEl.textContent = state.word;
+    wordEl.classList.remove('is-entering');
+    void wordEl.offsetWidth; // reflow → retrigger animația
+    wordEl.classList.add('is-entering');
+    prevWord = state.word;
+  }
+  timerFill.style.setProperty('--interval', state.intervalMs + 'ms');
 
   // play/pause: eticheta reflectă acțiunea următoare
   playBtn.textContent = state.playing ? '❚❚ pauză' : '▶ pornește';
@@ -115,10 +122,18 @@ function restartTimer() {
   if (state.playing) state.intervalId = setInterval(handleTick, state.intervalMs);
 }
 
+// retrigger animația timer-bar de la 0 (un nou interval începe)
+function retriggerTimerBar() {
+  timerFill.style.animation = 'none';
+  void timerFill.offsetWidth; // reflow
+  timerFill.style.animation = ''; // revine la animația din CSS (rulează doar dacă is-playing)
+}
+
 // ---- Handlere (forma canonică: mutate state → effect helpers → render) ----
 function handleTick() {
   state.word = pickWord(WORD_BANK[state.level], state.word);
   render();
+  retriggerTimerBar(); // bara repornește pe noul cuvânt
 }
 
 function handlePlayClick() {
@@ -127,6 +142,26 @@ function handlePlayClick() {
   if (state.playing) state.word = pickWord(WORD_BANK[state.level], state.word); // cuvânt nou la play (t=0)
   restartTimer();
   render();
+  if (state.playing) {
+    retriggerTimerBar();
+  } else {
+    wordEl.focus(); // focus-pe-pauză: SR anunță cuvântul (a11y, EXPERIENCE)
+  }
+}
+
+function handleFullscreen() {
+  if (!document.fullscreenElement) {
+    const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    if (p && p.catch) p.catch(function () {});
+  } else if (document.exitFullscreen) {
+    document.exitFullscreen();
+  }
+}
+
+function handleFullscreenChange() {
+  const on = !!document.fullscreenElement;
+  document.body.classList.toggle('is-fullscreen', on);
+  fullscreenBtn.setAttribute('aria-pressed', String(on));
 }
 
 function handleSpeedInput() {
@@ -136,8 +171,9 @@ function handleSpeedInput() {
 function handleSpeedChange() {
   state.intervalMs = clampDelay(Number(speedSlider.value) * 1000);
   saveSettings();
-  if (state.playing) restartTimer();
+  if (state.playing) { restartTimer(); }
   render();
+  if (state.playing) retriggerTimerBar(); // noul interval pentru bară
 }
 
 function handleLevelClick(e) {
@@ -159,7 +195,8 @@ function handleKeydown(e) {
 function boot() {
   wordEl = byId('hero-word'); messageEl = byId('message'); playBtn = byId('btn-play-pause');
   speedSlider = byId('speed-slider'); speedValueEl = byId('speed-value'); levelSegmentsEl = byId('level-segments');
-  if (![wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl].every(Boolean)) {
+  fullscreenBtn = byId('btn-fullscreen'); timerFill = byId('timer-fill');
+  if (![wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill].every(Boolean)) {
     console.error('Refs DOM lipsă'); return; // guard refs
   }
   levelSegs = Array.from(levelSegmentsEl.querySelectorAll('.level-segment'));
@@ -184,6 +221,14 @@ function boot() {
   speedSlider.addEventListener('change', handleSpeedChange);
   levelSegmentsEl.addEventListener('click', handleLevelClick); // delegation
   document.addEventListener('keydown', handleKeydown);
+
+  // Fullscreen (FR8): feature-detect — ascunde butonul dacă API-ul lipsește (iPhone), nu buton mort
+  if (document.documentElement.requestFullscreen) {
+    fullscreenBtn.addEventListener('click', handleFullscreen);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+  } else {
+    fullscreenBtn.hidden = true;
+  }
 }
 
 // ---- Teste funcții pure (?test=1, fără Node — D11) ----
