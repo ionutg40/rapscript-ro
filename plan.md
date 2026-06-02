@@ -2,17 +2,22 @@
 
 Tracker de proiect. Urmărim pașii BMad Method.
 
-## Unde suntem (2026-05-31)
+## Unde suntem (2026-06-02)
 
 | Fază BMad | Status |
 |---|---|
 | 1 - Analysis (brief) | ✅ aprobat → `docs/brief.md` |
 | 2 - Planning (PRD) | ✅ final → `docs/prd.md` (10 FR, FR-7 în v1) |
-| 2 - UX design | ⏭️ **următorul pas** (design ales: Underground Brutalist) |
-| 3 - Architecture | ⬜ (recomandat: vanilla + Pages) |
+| 2 - UX design | ✅ **gata** → `docs/DESIGN.md` (Nocturn) + `docs/EXPERIENCE.md` + `docs/ux-decisions.md` |
+| 3 - Architecture | 🟡 **următorul pas** (vanilla + Pages; draft pas-5 recuperat în `docs/architecture.step5-draft.md`) |
 | 3 - Epics & Stories | ⬜ |
 | 3 - Implementation readiness | ⬜ |
 | 4 - Sprint planning + build | ⬜ |
+
+> **Notă reluare (2026-06-02):** sesiunea precedentă a lucrat UX + arhitectură D1-D18 + draft pas-5
+> DOAR în context — nimic salvat pe disc. Singurul recuperat e textul pasului 5 (lipit de user →
+> `docs/architecture.step5-draft.md`, marcat DRAFT). UX a fost refăcut corect de la zero pe direcția
+> reală (Nocturn, post-pivot), NU pe brutalist. D1-D18 trebuie regenerați în faza Architecture.
 
 ## Groundwork (research front-loaded) — ✅ gata (2026-05-31)
 
