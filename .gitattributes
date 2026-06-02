@@ -1,0 +1,4 @@
+# Fișiere binare — fără normalizare text / diff (altfel filtre LFS/text → corupere pe Pages)
+*.woff2 -text -diff
+*.ttf   -text -diff
+*.png   -text -diff
