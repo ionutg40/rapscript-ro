@@ -64,13 +64,12 @@ def read_existing_hash() -> str | None:
 
 def render_js(bank: dict, h: str) -> str:
     count = sum(len(v) for v in bank.values())
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     # WORD_BANK ca OBIECT (state.level îl indexează direct — D5)
     body = json.dumps(bank, ensure_ascii=False, indent=2, sort_keys=True)
     return (
         "// AUTO-GENERAT din wordbank.json — NU EDITA (rulează: python gen_words.py)\n"
         f"const WORD_BANK = {body};\n\n"
-        f"const WORD_BANK_META = {{ count: {count}, hash: \"{h}\", generated: \"{generated}\" }};\n"
+        f"const WORD_BANK_META = {{ count: {count}, hash: \"{h}\" }};\n"
     )
 
 

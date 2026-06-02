@@ -65,3 +65,10 @@ UI comite `wordbank.json` prin **GitHub Contents API** cu **token-ul PERSONAL al
 `if: github.actor != 'github-actions[bot]'`). Pages redeployează. Zero server de administrat.
 Latență ~1-2 min (commit→CI→deploy) — comunic-o onest în UI. base64 pt API trebuie UTF-8-safe
 (`btoa(unescape(encodeURIComponent(s)))`) altfel diacriticele se strică.
+
+### 10. Timestamp volatil în fișier generat = churn de CI (commit + deploy la fiecare push)
+`gen_words.py` scria `generated: "<timestamp>"` în `words.js` → la fiecare push CI rula gen → words.js
+diferea (doar timestamp-ul) → bot-ul comitea un words.js nou → încă un deploy Pages care ANULA
+deploy-ul anterior (confuzie: „deploy cancelled"). Fix: scos `generated` (volatil, fără valoare —
+`hash` e identitatea de conținut, stabilă). Regulă: fișierele auto-generate-și-comise NU trebuie să
+conțină timestamp/nonce, altfel orice rulare le „schimbă" și intri în churn.

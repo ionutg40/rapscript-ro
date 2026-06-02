@@ -336,7 +336,7 @@ function boot() {
     state.errorMessage = 'nu am putut încărca cuvintele. reîncarcă pagina.';
     render(); console.error('WORD_BANK lipsește'); return;
   }
-  console.log('bancă:', WORD_BANK_META.count, 'cuvinte ·', WORD_BANK_META.generated);
+  console.log('bancă:', WORD_BANK_META.count, 'cuvinte · hash', String(WORD_BANK_META.hash).slice(0,8));
 
   loadSettings();
   if (!WORD_BANK[state.level]) state.level = 'incepator';
