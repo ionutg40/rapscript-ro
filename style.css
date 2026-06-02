@@ -23,12 +23,18 @@
 /* Tokeni Nocturn (subset; complet în Story 5.1) */
 :root {
   --color-bg: #0B0B0F;
+  --color-surface: #15151C;
+  --color-surface-2: #1F1F28;
+  --color-border: #26262F;
   --color-ink: #F4F4F7;
   --color-ink-dim: #9A9AA6;
   --color-accent: #8B7BFF;
   --color-danger: #F0717A;
   --space-md: 16px;
+  --radius-md: 10px;
 }
+
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* stare de eroare: ascunde cuvântul, mesaj danger (fail-loud, D10) */
 body.is-error .hero-word { display: none; }
@@ -65,12 +71,60 @@ body {
   hyphens: auto;
 }
 
+/* puntea de jos: controale + mesaj */
+.deck {
+  align-self: end;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+.btn, .level-segment {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-height: 44px;
+  cursor: pointer;
+}
+.btn {
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  padding: 10px 18px;
+}
+.btn:hover { background: var(--color-surface-2); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.speed { display: flex; align-items: center; gap: 8px; }
+.speed-slider { accent-color: var(--color-accent); }
+.speed-value { color: var(--color-ink-dim); font-size: 14px; min-width: 3ch; text-align: left; }
+.level-segments { display: flex; gap: 4px; }
+.level-segment {
+  font-size: 13px;
+  color: var(--color-ink-dim);
+  background: transparent;
+  padding: 8px 12px;
+}
+.level-segment.is-active {
+  color: var(--color-ink);
+  background: var(--color-surface-2);
+  border-color: var(--color-accent);
+}
 .message {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-weight: 500;
   font-size: 14px;
   color: var(--color-ink-dim);
   letter-spacing: 0.12em;
-  align-self: end;            /* la baza rândului de jos */
-  padding-bottom: var(--space-md);
+  min-height: 1.2em;
 }
