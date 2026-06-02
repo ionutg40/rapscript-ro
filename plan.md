@@ -10,9 +10,9 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | 2 - Planning (PRD) | ✅ final → `docs/prd.md` (10 FR, FR-7 în v1) |
 | 2 - UX design | ✅ **gata** → `docs/DESIGN.md` (Nocturn) + `docs/EXPERIENCE.md` + `docs/ux-decisions.md` |
 | 3 - Architecture | ✅ **COMPLETE** → `docs/architecture.md` (8 pași, D1-D18, status READY FOR IMPLEMENTATION) |
-| 3 - Epics & Stories | 🟡 **următorul pas** (`bmad-create-epics-and-stories`) |
-| 3 - Implementation readiness | ⬜ (`bmad-check-implementation-readiness`) |
-| 4 - Sprint planning + build | ⬜ |
+| 3 - Epics & Stories | ✅ **COMPLETE** → `docs/epics.md` (5 epics, 16 stories cu AC, FR1-10 acoperite) |
+| 3 - Implementation readiness | ✅ **READY** → `docs/implementation-readiness-report-2026-06-02.md` (0 blockers, 3 findings low) |
+| 4 - Sprint planning + build | 🟡 **următorul pas** (`bmad-sprint-planning` → `bmad-create-story` → `bmad-dev-story`) |
 
 > **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
 > + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
