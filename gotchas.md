@@ -30,3 +30,10 @@ La subset: `--unicodes="...,U+0218-021B,..."` (cere direct ș/ț comma-below) **
 (păstrează `locl` etc). Instanțierea unui variable font (`fontTools.varLib.instancer opsz=144 wght=600`)
 înainte de subset dă un cut display mic (Fraunces: 358KB TTF → 19KB woff2). Warning-ul „meta NOT subset;
 dropped" e inofensiv. Mono are nevoie de 2 fișiere (400+500) — un singur woff2/familie pierde o greutate.
+
+### 4. Pages „built" (API) ≠ deployat — fișier nou dă 404 până termină Actions
+`gh api repos/<u>/<r>/pages/builds/latest` poate zice `status: built` în timp ce deployment-ul real
+(GitHub Actions `pages build and deployment`) e încă `in_progress` → **un fișier NOU (ex. app.js) dă 404
+deși e în commit**. Nu re-push. Verifică run-ul corect: `gh run list` → așteaptă
+`pages build and deployment` să fie `completed/success` (`gh run watch <id>`), abia apoi fișierul nou
+e servit. La noi ~1-2 min după push.

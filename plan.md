@@ -17,7 +17,8 @@ Tracker de proiect. Urmărim pașii BMad Method.
 **Build progress:**
 - Epic 1 ✅ — 1.1 (Fraunces verificat) · 1.2 (schelet live) · 1.3 (fonturi self-host).
 - Epic 2 ✅ — 2.1 (`gen_words.py`→`words.js` 417) · 2.2 (încărcat live + guard) · 2.3 (CI freshness gate = success).
-- Următor: **Epic 3** (inima: `app.js` — state, render(), pickWord, timer). `gotchas.md`: 3 lecții (țintă ≥8).
+- Epic 3 ✅ LIVE — `app.js`: state, render() unic, pickWord no-repeat (testat 2000×), timer idempotent. Cuvinte RO se schimbă la 4s (auto-start temporar; Epic 4 adaugă Play + default paused).
+- Următor: **Epic 4** (controale: play/pause, viteză, nivel, persistență). `gotchas.md`: 4 lecții (țintă ≥8).
 
 > **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
 > + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
