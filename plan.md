@@ -23,10 +23,17 @@ Tracker de proiect. Urmărim pașii BMad Method.
 
 ## 🏁 v1 LIVRAT (2026-06-02)
 
-**Toate FR1-FR10 live · NFR-uri acoperite · SM-1 (live + inimă) PASS · SM-2 (`gotchas.md` 8 lecții) PASS.**
-Live: `https://ionutg40.github.io/rapscript-ro/`. Rămâne **SM-3 (soft):** fasty folosește app-ul câteva
-minute la un freestyle real — verificarea finală vizuală/interacțiune (animații, fullscreen, timer-bar)
-care cere ochi de om/browser, nu curl.
+**Toate FR1-FR10 live · NFR-uri acoperite · SM-1 (live + inimă) PASS · SM-2 (`gotchas.md` 10 lecții) PASS.**
+Live: `https://ionutg40.github.io/rapscript-ro/`.
+
+## v1.1 — Word Bank Viewer + Shared Add (Epic 6, 2026-06-02)
+
+Cerere client post-v1, prin advanced-elicitation + party (6 agenți) → **S2: GitHub-as-backend** (fără
+server). Arhitectură v1.1 (D19-D24), PRD OQ#2 închis. LIVE: drawer viewer per-nivel + add din UI →
+commit `wordbank.json` via GitHub API (token personal) → CI regen `words.js` → toți văd în ~1-2 min.
+- 6.1 viewer · 6.2 validare JS · 6.3 commit GitHub API · 6.4 CI auto-regen (fără churn) · 6.5 docs PAT.
+- **Test user (SM-3-like):** creează fine-grained PAT (`docs/add-words-setup.md`) → lipește în app →
+  adaugă un cuvânt → vezi-l propagat. (Commit-ul live cere token de om, nu curl.)
 
 > **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
 > + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
