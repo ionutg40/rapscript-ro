@@ -56,3 +56,12 @@ de `document.addEventListener('fullscreenchange', ...)` ca să sincronizezi star
 ### 8. localStorage aruncă pe `setItem` în Safari private (nu doar pe parse)
 În modul privat Safari, `localStorage.setItem` aruncă `QuotaExceededError`. Wrap-uiește ȘI scrierea,
 nu doar `JSON.parse` la citire; fail-silent → app-ul merge pe defaults (NFR Reliability).
+
+### 9. „Backend fără server" pentru 2 useri = GitHub (repo+API+Actions+Pages)
+Nu-ți trebuie Hetzner/Supabase pentru „cuvinte pe care le văd toți". Repo-ul E baza de date:
+UI comite `wordbank.json` prin **GitHub Contents API** cu **token-ul PERSONAL al fiecărui user**
+(fine-grained, `contents:write` pe acest repo, în localStorage — NU un token partajat băgat în site,
+ăla ar fi leak). Un Action regenerează `words.js` și-l comite înapoi (guard anti-buclă:
+`if: github.actor != 'github-actions[bot]'`). Pages redeployează. Zero server de administrat.
+Latență ~1-2 min (commit→CI→deploy) — comunic-o onest în UI. base64 pt API trebuie UTF-8-safe
+(`btoa(unescape(encodeURIComponent(s)))`) altfel diacriticele se strică.

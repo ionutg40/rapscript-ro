@@ -27,7 +27,33 @@
         </span>
         <button id="btn-fullscreen" class="btn btn-icon" type="button" aria-label="ecran complet" title="ecran complet">⛶</button>
       </div>
+      <button id="open-viewer" class="link-btn" type="button">vezi cuvintele</button>
       <p id="message" class="message">se încarcă cuvintele…</p>
+    </div>
+
+    <!-- Drawer: viewer listă + adăugare (Epic 6 / S2) -->
+    <div id="viewer" class="drawer" hidden>
+      <div id="viewer-overlay" class="drawer__overlay"></div>
+      <div class="drawer__panel" role="dialog" aria-label="cuvinte">
+        <div class="drawer__head">
+          <span id="viewer-title" class="drawer__title">…</span>
+          <button id="viewer-close" class="btn btn-icon" type="button" aria-label="închide">✕</button>
+        </div>
+        <ul id="viewer-list" class="word-list"></ul>
+        <div class="add-row">
+          <input id="add-input" class="add-input" type="text" maxlength="40" placeholder="adaugă un cuvânt…" aria-label="adaugă cuvânt">
+          <button id="add-btn" class="btn" type="button">adaugă</button>
+        </div>
+        <p id="add-status" class="add-status" aria-live="polite"></p>
+        <details class="token-row">
+          <summary>token GitHub (o singură dată)</summary>
+          <div class="token-body">
+            <input id="token-input" class="add-input" type="password" placeholder="fine-grained PAT…" aria-label="token GitHub">
+            <button id="token-save" class="btn" type="button">salvează</button>
+            <p class="token-help">Salvat doar pe acest dispozitiv, niciodată trimis altundeva decât la GitHub. Vezi <code>docs/add-words-setup.md</code> pentru cum îl creezi.</p>
+          </div>
+        </details>
+      </div>
     </div>
   </main>
 

@@ -8,6 +8,16 @@ const DEFAULT_DELAY = 4000;
 const DEFAULT_LEVEL = 'avansat';
 const LS_KEY = 'rapscript:settings';
 
+// ---- GitHub-as-backend (S2, D20): wordbank.json = baza partajată ----
+const GH_REPO = 'ionutg40/rapscript-ro';
+const GH_BRANCH = 'main';
+const GH_PATH = 'assets/wordbank.json';
+const GH_TOKEN_KEY = 'rapscript:ghtoken';
+const LEVELS = ['incepator', 'avansat', 'profesionist'];
+
+// cuvinte adăugate în sesiune (merge optimist; canonic vine din words.js la următorul load, D24)
+const sessionAdded = { incepator: [], avansat: [], profesionist: [] };
+
 // ---- State: sursa unică de adevăr runtime (D5) ----
 const state = {
   word: '',
@@ -22,6 +32,7 @@ const state = {
 
 // ---- Refs DOM (cache o dată) ----
 let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill;
+let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus, tokenInput, tokenSaveBtn;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
 
@@ -41,6 +52,24 @@ function pickWord(bankArray, currentWord) {
     pick = bankArray[Math.floor(Math.random() * bankArray.length)];
   }
   return pick;
+}
+
+// banca pentru un nivel = canonic (WORD_BANK) + adăugate în sesiune (D24 merge optimist)
+function bankFor(level) {
+  return WORD_BANK[level].concat(sessionAdded[level] || []);
+}
+
+// validare ÎNAINTE de commit (D22): normalizat lowercase, un cuvânt, ne-existent cross-nivel
+function validateNewWord(raw) {
+  const word = String(raw || '').trim().toLowerCase();
+  if (!word) return { ok: false, msg: 'scrie un cuvânt' };
+  if (/[,\s]/.test(word)) return { ok: false, msg: 'un singur cuvânt, fără spațiu sau virgulă' };
+  for (const lvl of LEVELS) {
+    if (bankFor(lvl).some((w) => w.toLowerCase() === word)) {
+      return { ok: false, msg: 'cuvântul există deja în bancă' };
+    }
+  }
+  return { ok: true, word: word };
 }
 
 // ---- Persistență (fail-silent, D14) ----
@@ -112,6 +141,7 @@ function render() {
   }
 
   messageEl.textContent = ''; // controalele arată starea; message = doar loading/error
+  updateViewerCount(); // contorul „vezi cuvintele (N)" pe nivelul curent
   console.assert(state.word !== '', 'render: ready cere un cuvânt');
 }
 
@@ -131,7 +161,7 @@ function retriggerTimerBar() {
 
 // ---- Handlere (forma canonică: mutate state → effect helpers → render) ----
 function handleTick() {
-  state.word = pickWord(WORD_BANK[state.level], state.word);
+  state.word = pickWord(bankFor(state.level), state.word);
   render();
   retriggerTimerBar(); // bara repornește pe noul cuvânt
 }
@@ -139,7 +169,7 @@ function handleTick() {
 function handlePlayClick() {
   if (!state.ready) return;
   state.playing = !state.playing;
-  if (state.playing) state.word = pickWord(WORD_BANK[state.level], state.word); // cuvânt nou la play (t=0)
+  if (state.playing) state.word = pickWord(bankFor(state.level), state.word); // cuvânt nou la play (t=0)
   restartTimer();
   render();
   if (state.playing) {
@@ -189,6 +219,106 @@ function handleKeydown(e) {
     e.preventDefault();
     handlePlayClick();
   }
+  if (e.key === 'Escape' && drawerEl && !drawerEl.hidden) closeViewer();
+}
+
+// ---- Epic 6: Viewer + Shared Add (S2) ----
+const ghToken = () => { try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; } };
+
+// base64 UTF-8 safe (diacriticele RO)
+const b64encode = (s) => btoa(unescape(encodeURIComponent(s)));
+const b64decode = (s) => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
+
+async function ghGetBank() {
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`, {
+    headers: { Authorization: 'Bearer ' + ghToken(), Accept: 'application/vnd.github+json' },
+  });
+  if (!r.ok) throw new Error('GET ' + r.status);
+  const j = await r.json();
+  return { json: JSON.parse(b64decode(j.content)), sha: j.sha };
+}
+
+async function ghCommitWord(word, level) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { json, sha } = await ghGetBank();
+    const exists = LEVELS.some((lvl) => (json.levels[lvl] || []).some((w) => w.toLowerCase() === word));
+    if (exists) throw new Error('exists'); // alt user l-a adăugat între timp
+    json.levels[level] = json.levels[level].concat(word).sort();
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_PATH}`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + ghToken(), Accept: 'application/vnd.github+json' },
+      body: JSON.stringify({
+        message: `Add cuvânt: ${word} (${level}) [via UI]`,
+        content: b64encode(JSON.stringify(json, null, 2) + '\n'),
+        sha: sha,
+        branch: GH_BRANCH,
+      }),
+    });
+    if (r.ok) return;
+    if (r.status === 409) continue; // sha învechit (alt commit) → re-fetch + retry
+    throw new Error('PUT ' + r.status);
+  }
+  throw new Error('conflict');
+}
+
+function setAddStatus(msg, kind) {
+  addStatus.textContent = msg;
+  addStatus.className = 'add-status' + (kind ? ' is-' + kind : '');
+}
+
+async function handleAddWord() {
+  const v = validateNewWord(addInput.value);
+  if (!v.ok) { setAddStatus(v.msg, 'err'); return; }
+  if (!ghToken()) {
+    setAddStatus('configurează întâi token-ul GitHub (mai jos)', 'err');
+    if (tokenInput) tokenInput.focus();
+    return;
+  }
+  // merge optimist: apare imediat la mine (canonic vine la toți după CI+deploy, D24)
+  sessionAdded[state.level].push(v.word);
+  addInput.value = '';
+  renderViewer();
+  setAddStatus('se adaugă „' + v.word + '"…', '');
+  addBtn.disabled = true;
+  try {
+    await ghCommitWord(v.word, state.level);
+    setAddStatus('„' + v.word + '" adăugat — apare la toți în ~1-2 min', 'ok');
+  } catch (e) {
+    const i = sessionAdded[state.level].indexOf(v.word); // revert optimist
+    if (i >= 0) sessionAdded[state.level].splice(i, 1);
+    renderViewer();
+    if (e.message === 'exists') setAddStatus('cuvântul există deja în bancă', 'err');
+    else if (/40[13]/.test(e.message)) setAddStatus('token invalid sau fără drepturi pe repo', 'err');
+    else if (e.message === 'conflict') setAddStatus('conflict — reîncearcă', 'err');
+    else setAddStatus('nu am putut salva (' + e.message + ') — reîncearcă', 'err');
+    console.error('add fail', e);
+  } finally {
+    addBtn.disabled = false;
+  }
+}
+
+function renderViewer() {
+  const lvl = state.level;
+  const canonical = WORD_BANK[lvl];
+  const mine = sessionAdded[lvl] || [];
+  viewerTitle.textContent = lvl + ' · ' + (canonical.length + mine.length) + ' cuvinte';
+  viewerList.replaceChildren();
+  const add = (w, mineFlag) => {
+    const li = document.createElement('li');
+    li.textContent = w;
+    if (mineFlag) { li.className = 'is-mine'; li.title = 'adăugat de tine — se publică în ~1-2 min'; }
+    viewerList.appendChild(li);
+  };
+  canonical.forEach((w) => add(w, false));
+  mine.forEach((w) => add(w, true));
+}
+
+function openViewer() { drawerEl.hidden = false; document.body.classList.add('is-drawer-open'); renderViewer(); }
+function closeViewer() { drawerEl.hidden = true; document.body.classList.remove('is-drawer-open'); }
+
+function updateViewerCount() {
+  if (!openViewerBtn) return;
+  openViewerBtn.textContent = 'vezi cuvintele (' + (WORD_BANK[state.level].length + sessionAdded[state.level].length) + ')';
 }
 
 // ---- Boot ----
@@ -211,7 +341,7 @@ function boot() {
   loadSettings();
   if (!WORD_BANK[state.level]) state.level = 'incepator';
   state.ready = true;
-  state.word = pickWord(WORD_BANK[state.level], '');
+  state.word = pickWord(bankFor(state.level), '');
   state.playing = false; // default PAUSED (gata cu auto-start)
   render();
 
@@ -228,6 +358,27 @@ function boot() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
   } else {
     fullscreenBtn.hidden = true;
+  }
+
+  // Epic 6: viewer + add (opțional — dacă markup-ul lipsește, app-ul merge fără)
+  openViewerBtn = byId('open-viewer'); drawerEl = byId('viewer');
+  viewerTitle = byId('viewer-title'); viewerList = byId('viewer-list');
+  viewerClose = byId('viewer-close'); viewerOverlay = byId('viewer-overlay');
+  addInput = byId('add-input'); addBtn = byId('add-btn'); addStatus = byId('add-status');
+  tokenInput = byId('token-input'); tokenSaveBtn = byId('token-save');
+  if (openViewerBtn && drawerEl) {
+    updateViewerCount();
+    openViewerBtn.addEventListener('click', openViewer);
+    viewerClose.addEventListener('click', closeViewer);
+    viewerOverlay.addEventListener('click', closeViewer);
+    addBtn.addEventListener('click', handleAddWord);
+    addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddWord(); });
+    tokenSaveBtn.addEventListener('click', () => {
+      try {
+        const t = tokenInput.value.trim();
+        if (t) { localStorage.setItem(GH_TOKEN_KEY, t); tokenInput.value = ''; setAddStatus('token salvat (doar pe acest dispozitiv)', 'ok'); }
+      } catch (e) { setAddStatus('nu pot salva token-ul (mod privat?)', 'err'); }
+    });
   }
 }
 

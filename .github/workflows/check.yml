@@ -1,15 +1,35 @@
-name: word-bank-check
+name: word-bank
 
-# Gate de freshness (D11): refuză push-ul dacă words.js nu corespunde lui wordbank.json.
-on: [push, pull_request]
+# La orice push pe main: regenerează words.js din wordbank.json (gen_words.py validează),
+# și commit-uiește words.js dacă s-a schimbat. Asta e "backend"-ul: UI comite wordbank.json
+# (GitHub API) → CI regenerează words.js → Pages redeployează → toți văd cuvântul nou (D21).
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
-  check:
+  regen:
+    # bot-ul nu se re-declanșează pe propriul commit (anti-buclă)
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Verifică freshness words.js
-        run: python gen_words.py --check
+      - name: Regenerează words.js (gen_words.py validează — date proaste = CI roșu)
+        run: python gen_words.py
+      - name: Commit words.js dacă s-a schimbat
+        run: |
+          if ! git diff --quiet words.js; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add words.js
+            git commit -m "CI: regenerează words.js [auto]"
+            git push
+          else
+            echo "words.js e fresh — nimic de comis."
+          fi

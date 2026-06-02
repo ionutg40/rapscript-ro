@@ -130,7 +130,7 @@ Funcționează pe telefon, desktop și ecran mare.
 ## 8. Open Questions
 
 1. **Re-leveling fin** — ~10 cuvinte borderline de mutat între niveluri (deferat la editare conținut; nu blochează build-ul).
-2. **Extinderea word bank-ului** — cum crește banca peste seed-ul de 417, și cine validează calitatea? (post-v1)
+2. ~~**Extinderea word bank-ului** — cum crește banca peste seed-ul de 417, și cine validează calitatea?~~ → **ÎNCHIS 2026-06-02 (v1.1):** banca crește prin **add din UI → commit în `wordbank.json` via GitHub API (token personal per user) → CI rulează `gen_words.py` (validare = poarta de calitate) → redeploy**. GitHub = backend (fără server propriu). Scope: 2 useri de încredere. Vezi `architecture.md` › Change v1.1 (D19-D24) + Epic 6.
 
 ## 9. Assumptions Index
 

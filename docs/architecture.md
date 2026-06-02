@@ -513,3 +513,37 @@ tiere + tabel de nume (handoff curat, Paige). Structură completă. Exemple bune
 + review de 7 agenți, toate findings triate/aplicate.
 **First Implementation Priority:** (1) fonttools pe Fraunces (E4) → (2) walking skeleton live (D17,
 index.html gol + `.nojekyll` + Pages) → URL public înainte de logică.
+
+---
+
+## Change v1.1 — Word Bank Viewer + Shared Add (S2: GitHub-as-backend)
+
+> Cerere client (2026-06-02, post-v1): (a) vezi lista de cuvinte/nivel în UX; (b) adaugă cuvinte pe
+> care le văd TOȚI userii (max 2 useri deocamdată). Decizie luată prin advanced-elicitation + party
+> mode (6 agenți). Răspuns la **PRD Open Question #2** (creșterea băncii + cine validează calitatea).
+> **Fără Hetzner, fără backend propriu** — GitHub E backend-ul (repo=DB, API=write, Actions=process, Pages=serve).
+
+- **D19 — Viewer (a):** drawer read-only (slide din jos / dreapta) declanșat de un text mono
+  `vezi cuvintele (N)`; estompează ecranul principal (overlay), listează `WORD_BANK[level]` pe nivelul
+  activ, schimbat cu segmentele existente; închidere overlay/Esc. Read pur prin `render*()`. Fără rute/modale.
+- **D20 — Shared add = GitHub-as-backend (S2).** `wordbank.json` (repo) = baza de date partajată;
+  scriere prin **GitHub Contents API** cu **token-ul PERSONAL al fiecărui user** (fine-grained PAT,
+  scope `contents:write` DOAR pe acest repo), ținut în `localStorage` (`rapscript:ghtoken`), NICIODATĂ
+  commited/logat. Scală: 2 colaboratori de încredere. **NFR Privacy amendat:** calea de ADD face UN
+  request extern (`api.github.com`) cu token-ul userului — calea read/play rămâne zero-network.
+  Excepție conștientă, scoped, doar pentru feature-ul de curare-scriere.
+- **D21 — CI auto-regen:** Action pe push care schimbă `wordbank.json` (paths filter) → rulează
+  `gen_words.py` (validează + regenerează `words.js`) → dacă s-a schimbat, commit `words.js` înapoi
+  (bot commit; paths-filter previne bucla). **Validarea gen_words.py (dedup intra+cross, ≥2, format) =
+  poarta FINALĂ** — date proaste → CI roșu → `words.js` NU se regenerează → fail-loud (semnal vizibil).
+- **D22 — Validare JS ÎNAINTE de commit (Amelia):** `validateNewWord(word, bank)` — trim, ne-gol,
+  fără virgulă, un singur cuvânt ([ASSUMPTION] single-word v1), normalizat lowercase (banca e lowercase),
+  NU există deja în bancă (case-insensitive, cross-nivel). Feedback rapid; CI = backstop.
+- **D23 — Conflict (2 useri simultan):** PUT cere `sha` curent al fișierului; 409 → re-fetch sha +
+  retry o dată; altfel mesaj „reîncearcă". CI dedup prinde dublura dacă scapă.
+- **D24 — Latență + onestitate UX (Paige/Sally):** după commit, cuvântul e în `wordbank.json` dar apare
+  canonic la TOȚI abia după CI + redeploy Pages (~1-2 min). Mesaj onest: `adăugat — apare la toți în
+  ~1-2 min`. Pentru cel care adaugă: **merge optimist în sesiune** (cuvântul intră imediat în banca
+  runtime, marcat — la următorul load `words.js` canonic îl are oricum, fără divergență persistentă).
+- **NU P1-persistent-divergent, NU P3-token-partajat-în-site, NU P4-backend, NU Hetzner** — vezi party
+  mode pt. respingeri. Setup per-user: colaborator pe repo + un fine-grained PAT (docs).

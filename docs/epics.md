@@ -377,3 +377,41 @@ So that proiectul e livrat și am învățat din el.
 **When** fac deploy final și completez `gotchas.md` pe parcurs
 **Then** app-ul e live pe URL public cu inima FR1-FR9 funcțională (SM-1 PASS)
 **And** `gotchas.md` are ≥8 lecții reale (SM-2), trăite pe parcurs, nu scrise retroactiv.
+
+---
+
+## Epic 6: Word Bank Viewer + Shared Add (v1.1)
+
+fasti (și al 2-lea user) văd lista de cuvinte pe nivel și adaugă cuvinte noi care apar la TOȚI —
+prin GitHub ca backend (repo=DB, API=write, CI=validare+regen, Pages=serve). Fără server propriu.
+**Acoperă:** cererea client post-v1 + PRD Open Question #2. Arhitectură: D19-D24.
+
+### Story 6.1: Viewer listă cuvinte/nivel (read-only)
+As a user, I want să văd toate cuvintele dintr-un nivel, So that știu ce conține piscina / cureț banca.
+**AC:** Given drawer-ul închis, When apăs `vezi cuvintele (N)`, Then alunecă un panou care listează
+`WORD_BANK[nivel activ]` (mono, dense) + contor; schimb nivelul cu segmentele existente; închid cu
+overlay/Esc. Read pur prin render, fără rute/modale.
+
+### Story 6.2: Adăugare cuvânt local + validare JS
+As a user, I want să adaug un cuvânt din UI, So that cresc banca fără să editez fișiere.
+**AC:** Given un input în drawer, When scriu un cuvânt și confirm, Then `validateNewWord` verifică
+(ne-gol, fără virgulă, un cuvânt, normalizat lowercase, NU există deja case-insensitive cross-nivel);
+invalid → mesaj clar; valid → merge optimist în banca de sesiune (apare imediat la mine, marcat).
+
+### Story 6.3: Commit partajat via GitHub API (token personal)
+As a user, I want cuvântul să ajungă la celălalt user, So that banca e comună.
+**AC:** Given un fine-grained PAT salvat local (`rapscript:ghtoken`), When confirm add, Then UI face
+GET `wordbank.json` (sha) → adaugă cuvântul în nivel → PUT prin Contents API; 409 → re-fetch+retry;
+succes → mesaj `adăugat — apare la toți în ~1-2 min`. Token în localStorage, NICIODATĂ commit/log.
+Lipsă token → prompt de configurare (vezi docs). [ASSUMPTION] 2 useri colaboratori de încredere.
+
+### Story 6.4: CI auto-regen words.js
+As maintainer, I want `words.js` regenerat automat când se schimbă banca, So that nimeni nu rulează manual.
+**AC:** Given un push care schimbă `wordbank.json`, When rulează Action-ul, Then `gen_words.py`
+validează + regenerează `words.js` și-l commit-uiește înapoi (bot; paths-filter previne bucla);
+date proaste → CI roșu, `words.js` nemodificat (fail-loud). Pages redeployează → toți văd cuvântul.
+
+### Story 6.5: Setup docs + microcopy onestă
+As a new user, I want să știu cum configurez tokenul și unde trăiește cuvântul, So that nu mă păcălesc.
+**AC:** docs/ explică: colaborator pe repo + fine-grained PAT (`contents:write` pe acest repo).
+Microcopy RO onestă: stare adăugare/succes/eroare/latență; tokenul e al tău, local.
