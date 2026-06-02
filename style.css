@@ -40,12 +40,19 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   min-height: 100vh;
-  display: grid;
-  place-items: center;
   font-family: "IBM Plex Mono", monospace;
 }
 
-.stage { text-align: center; padding: var(--space-md); }
+/* cuvântul centrat în zona de sus, mesajul ancorat la baza ecranului */
+.stage {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-md);
+}
 
 /* hero serif editorial — fallback serif dacă woff2 lipsește (degradare citibilă, nu invizibil) */
 .hero-word {
@@ -64,5 +71,6 @@ body {
   font-size: 14px;
   color: var(--color-ink-dim);
   letter-spacing: 0.12em;
-  margin-top: var(--space-md);
+  align-self: end;            /* la baza rândului de jos */
+  padding-bottom: var(--space-md);
 }
