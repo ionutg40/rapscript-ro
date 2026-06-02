@@ -10,7 +10,24 @@
 <body>
   <main class="stage">
     <h1 class="hero-word">DEZAMĂGIRE</h1>
-    <p class="message">schelet live · se construiește</p>
+    <p class="message">se încarcă cuvintele…</p>
   </main>
+
+  <!-- banca: încărcată prin <script>, NU fetch (CORS pe file://) — D2 -->
+  <script src="words.js"></script>
+  <script>
+    // Seed de boot (guard bancă, fail-loud) — se mută în app.js la Epic 3.
+    (function () {
+      var msg = document.querySelector('.message');
+      if (typeof WORD_BANK === 'undefined' || typeof WORD_BANK_META === 'undefined') {
+        msg.textContent = 'nu am putut încărca cuvintele. reîncarcă pagina.';
+        document.body.classList.add('is-error');
+        console.error('WORD_BANK lipsește — words.js neîncărcat?');
+        return;
+      }
+      console.log('bancă încărcată:', WORD_BANK_META.count, 'cuvinte ·', WORD_BANK_META.generated);
+      msg.textContent = WORD_BANK_META.count + ' cuvinte · 3 niveluri · se construiește';
+    })();
+  </script>
 </body>
 </html>
