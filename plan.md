@@ -31,7 +31,8 @@ Live: `https://ionutg40.github.io/rapscript-ro/`.
 Cerere client post-v1, prin advanced-elicitation + party (6 agenți) → **S2: GitHub-as-backend** (fără
 server). Arhitectură v1.1 (D19-D24), PRD OQ#2 închis. LIVE: drawer viewer per-nivel + add din UI →
 commit `wordbank.json` via GitHub API (token personal) → CI regen `words.js` → toți văd în ~1-2 min.
-- 6.1 viewer · 6.2 validare JS · 6.3 commit GitHub API · 6.4 CI auto-regen (fără churn) · 6.5 docs PAT.
+- 6.1 viewer · 6.2 validare JS · 6.3 commit · 6.4 CI auto-regen · 6.5 docs.
+- **v1.2:** add prin **Cloudflare Worker** (token pe server, NU în browser) — câmpul de token SCOS. `worker/rapscript-worker.js` + `docs/worker-setup.md`. Owner pune `WORKER_URL` după deploy.
 - **Test user (SM-3-like):** creează fine-grained PAT (`docs/add-words-setup.md`) → lipește în app →
   adaugă un cuvânt → vezi-l propagat. (Commit-ul live cere token de om, nu curl.)
 
