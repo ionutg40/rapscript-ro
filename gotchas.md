@@ -72,3 +72,10 @@ diferea (doar timestamp-ul) → bot-ul comitea un words.js nou → încă un dep
 deploy-ul anterior (confuzie: „deploy cancelled"). Fix: scos `generated` (volatil, fără valoare —
 `hash` e identitatea de conținut, stabilă). Regulă: fișierele auto-generate-și-comise NU trebuie să
 conțină timestamp/nonce, altfel orice rulare le „schimbă" și intri în churn.
+
+### 11. „Zero token în browser" = backend obligatoriu (un secret în browser nu e secret)
+Cerința „token o dată pe veci sau deloc" nu se poate face client-side: orice secret pus în site-ul
+static e public (View Source) → furat + GitHub îl revocă. Soluția = un backend care ține secretul
+(Cloudflare Worker: token ca Secret, setat o dată; browserul cheamă Worker-ul). Costul: endpoint public
+→ anti-bot (Turnstile) + rate-limit + token scoped + validare în Worker ȘI în CI. Pentru 2 useri,
+direct-commit cu Turnstile e ok; la abuz real, treci pe batch (KV+cron), nu commit-per-call.

@@ -547,3 +547,14 @@ index.html gol + `.nojekyll` + Pages) → URL public înainte de logică.
   runtime, marcat — la următorul load `words.js` canonic îl are oricum, fără divergență persistentă).
 - **NU P1-persistent-divergent, NU P3-token-partajat-în-site, NU P4-backend, NU Hetzner** — vezi party
   mode pt. respingeri. Setup per-user: colaborator pe repo + un fine-grained PAT (docs).
+
+### Amendament D20 → D25 (2026-06-02, v1.2): token pe Worker, NU în browser
+
+Cerința client întărită: **token o dată pe veci SAU deloc; niciun câmp de token pentru user.** Un secret
+în browser nu e secret (static public). Deci: **Cloudflare Worker** ține tokenul ca Secret (setat o dată
+de owner); browserul face `POST {word, level}` la Worker; Worker-ul validează + comite în `wordbank.json`;
+CI regenerează (D21). Cod: `worker/rapscript-worker.js`. Mitigări (Red Team): Origin check + validare
+strictă + size cap + **Turnstile** (anti-bot) + rate-limit (dashboard) + token scoped single-repo + zero
+error leakage. Trade-off acceptat conștient: endpoint public semi-deschis pe banca curată (CI validează +
+revertabil; la 2 useri, risc mic). Upgrade dacă apare abuz: batch via KV+cron în loc de commit-per-call.
+Setup owner: `docs/worker-setup.md`. (Modelul vechi „token în browser per-device" = scos.)

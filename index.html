@@ -45,14 +45,8 @@
           <button id="add-btn" class="btn" type="button">adaugă</button>
         </div>
         <p id="add-status" class="add-status" aria-live="polite"></p>
-        <!-- token: ascuns; apare DOAR prima dată când adaugi fără token, apoi dispare -->
-        <div id="token-prompt" class="token-row" hidden>
-          <p class="token-help">Ca să adaugi, ai nevoie o singură dată de un token GitHub. Cum îl creezi: <code>docs/add-words-setup.md</code>. Salvat doar pe acest dispozitiv.</p>
-          <div class="token-body">
-            <input id="token-input" class="add-input" type="password" placeholder="lipește token-ul GitHub…" aria-label="token GitHub">
-            <button id="token-save" class="btn" type="button">salvează</button>
-          </div>
-        </div>
+        <!-- gazda widget-ului Turnstile (invizibil; activ doar dacă TURNSTILE_SITEKEY e setat) -->
+        <div id="turnstile-host"></div>
       </div>
     </div>
   </main>

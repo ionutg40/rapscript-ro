@@ -8,11 +8,10 @@ const DEFAULT_DELAY = 4000;
 const DEFAULT_LEVEL = 'avansat';
 const LS_KEY = 'rapscript:settings';
 
-// ---- GitHub-as-backend (S2, D20): wordbank.json = baza partajată ----
-const GH_REPO = 'ionutg40/rapscript-ro';
-const GH_BRANCH = 'main';
-const GH_PATH = 'assets/wordbank.json';
-const GH_TOKEN_KEY = 'rapscript:ghtoken';
+// ---- Backend: Cloudflare Worker (D20 v2): tokenul stă pe Worker, NU în browser ----
+// După ce deployezi Worker-ul (vezi docs/worker-setup.md), pune aici URL-ul lui.
+const WORKER_URL = '';        // ex: 'https://rapscript-gh.<contul-tău>.workers.dev'
+const TURNSTILE_SITEKEY = ''; // (opțional) site key Cloudflare Turnstile (anti-bot)
 const LEVELS = ['incepator', 'avansat', 'profesionist'];
 
 // cuvinte adăugate în sesiune (merge optimist; canonic vine din words.js la următorul load, D24)
@@ -32,7 +31,7 @@ const state = {
 
 // ---- Refs DOM (cache o dată) ----
 let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill;
-let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus, tokenPrompt, tokenInput, tokenSaveBtn;
+let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
 
@@ -222,43 +221,33 @@ function handleKeydown(e) {
   if (e.key === 'Escape' && drawerEl && !drawerEl.hidden) closeViewer();
 }
 
-// ---- Epic 6: Viewer + Shared Add (S2) ----
-const ghToken = () => { try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; } };
+// ---- Epic 6: Viewer + Shared Add (prin Cloudflare Worker — tokenul NU e în browser) ----
 
-// base64 UTF-8 safe (diacriticele RO)
-const b64encode = (s) => btoa(unescape(encodeURIComponent(s)));
-const b64decode = (s) => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
-
-async function ghGetBank() {
-  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`, {
-    headers: { Authorization: 'Bearer ' + ghToken(), Accept: 'application/vnd.github+json' },
-  });
-  if (!r.ok) throw new Error('GET ' + r.status);
-  const j = await r.json();
-  return { json: JSON.parse(b64decode(j.content)), sha: j.sha };
+// Turnstile (anti-bot, opțional): se încarcă DOAR dacă TURNSTILE_SITEKEY e setat (zero request altfel)
+let turnstileWidgetId = null;
+function loadTurnstile() {
+  if (!TURNSTILE_SITEKEY || document.getElementById('cf-turnstile-script')) return;
+  const s = document.createElement('script');
+  s.id = 'cf-turnstile-script';
+  s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+  s.async = true; s.defer = true;
+  s.onload = () => {
+    const host = byId('turnstile-host');
+    if (host && typeof turnstile !== 'undefined') {
+      turnstileWidgetId = turnstile.render(host, { sitekey: TURNSTILE_SITEKEY, size: 'invisible' });
+    }
+  };
+  document.head.appendChild(s);
 }
-
-async function ghCommitWord(word, level) {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const { json, sha } = await ghGetBank();
-    const exists = LEVELS.some((lvl) => (json.levels[lvl] || []).some((w) => w.toLowerCase() === word));
-    if (exists) throw new Error('exists'); // alt user l-a adăugat între timp
-    json.levels[level] = json.levels[level].concat(word).sort();
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_PATH}`, {
-      method: 'PUT',
-      headers: { Authorization: 'Bearer ' + ghToken(), Accept: 'application/vnd.github+json' },
-      body: JSON.stringify({
-        message: `Add cuvânt: ${word} (${level}) [via UI]`,
-        content: b64encode(JSON.stringify(json, null, 2) + '\n'),
-        sha: sha,
-        branch: GH_BRANCH,
-      }),
+async function getTurnstileToken() {
+  if (!TURNSTILE_SITEKEY || typeof turnstile === 'undefined' || turnstileWidgetId === null) return '';
+  try {
+    turnstile.reset(turnstileWidgetId);
+    return await new Promise((resolve) => {
+      turnstile.execute(turnstileWidgetId, { callback: resolve });
+      setTimeout(() => resolve(''), 8000); // timeout de siguranță
     });
-    if (r.ok) return;
-    if (r.status === 409) continue; // sha învechit (alt commit) → re-fetch + retry
-    throw new Error('PUT ' + r.status);
-  }
-  throw new Error('conflict');
+  } catch (e) { return ''; }
 }
 
 function setAddStatus(msg, kind) {
@@ -269,12 +258,7 @@ function setAddStatus(msg, kind) {
 async function handleAddWord() {
   const v = validateNewWord(addInput.value);
   if (!v.ok) { setAddStatus(v.msg, 'err'); return; }
-  if (!ghToken()) {
-    if (tokenPrompt) tokenPrompt.hidden = false; // dezvăluie câmpul DOAR acum
-    setAddStatus('ai nevoie de un token GitHub o singură dată ↓', 'err');
-    if (tokenInput) tokenInput.focus();
-    return;
-  }
+  if (!WORKER_URL) { setAddStatus('adăugarea nu e configurată încă (vezi docs/worker-setup.md)', 'err'); return; }
   // merge optimist: apare imediat la mine (canonic vine la toți după CI+deploy, D24)
   sessionAdded[state.level].push(v.word);
   addInput.value = '';
@@ -282,16 +266,26 @@ async function handleAddWord() {
   setAddStatus('se adaugă „' + v.word + '"…', '');
   addBtn.disabled = true;
   try {
-    await ghCommitWord(v.word, state.level);
+    const cfToken = await getTurnstileToken();
+    const r = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word: v.word, level: state.level, cfToken: cfToken }),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      throw new Error(d.error || ('http ' + r.status));
+    }
     setAddStatus('„' + v.word + '" adăugat — apare la toți în ~1-2 min', 'ok');
   } catch (e) {
     const i = sessionAdded[state.level].indexOf(v.word); // revert optimist
     if (i >= 0) sessionAdded[state.level].splice(i, 1);
     renderViewer();
-    if (e.message === 'exists') setAddStatus('cuvântul există deja în bancă', 'err');
-    else if (/40[13]/.test(e.message)) setAddStatus('token invalid sau fără drepturi pe repo', 'err');
-    else if (e.message === 'conflict') setAddStatus('conflict — reîncearcă', 'err');
-    else setAddStatus('nu am putut salva (' + e.message + ') — reîncearcă', 'err');
+    const m = String(e.message);
+    if (m === 'exists') setAddStatus('cuvântul există deja în bancă', 'err');
+    else if (m === 'turnstile') setAddStatus('verificare anti-bot eșuată — reîncearcă', 'err');
+    else if (m === 'origin') setAddStatus('cerere blocată (origin)', 'err');
+    else setAddStatus('nu am putut salva (' + m + ') — reîncearcă', 'err');
     console.error('add fail', e);
   } finally {
     addBtn.disabled = false;
@@ -366,24 +360,14 @@ function boot() {
   viewerTitle = byId('viewer-title'); viewerList = byId('viewer-list');
   viewerClose = byId('viewer-close'); viewerOverlay = byId('viewer-overlay');
   addInput = byId('add-input'); addBtn = byId('add-btn'); addStatus = byId('add-status');
-  tokenPrompt = byId('token-prompt'); tokenInput = byId('token-input'); tokenSaveBtn = byId('token-save');
   if (openViewerBtn && drawerEl) {
     updateViewerCount();
+    loadTurnstile(); // încarcă anti-bot doar dacă e configurat (altfel no-op)
     openViewerBtn.addEventListener('click', openViewer);
     viewerClose.addEventListener('click', closeViewer);
     viewerOverlay.addEventListener('click', closeViewer);
     addBtn.addEventListener('click', handleAddWord);
     addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddWord(); });
-    tokenSaveBtn.addEventListener('click', () => {
-      try {
-        const t = tokenInput.value.trim();
-        if (!t) { setAddStatus('lipește întâi token-ul', 'err'); return; }
-        localStorage.setItem(GH_TOKEN_KEY, t);
-        tokenInput.value = '';
-        if (tokenPrompt) tokenPrompt.hidden = true; // gata, dispare definitiv
-        setAddStatus('token salvat — apasă din nou „adaugă"', 'ok');
-      } catch (e) { setAddStatus('nu pot salva token-ul (mod privat?)', 'err'); }
-    });
   }
 }
 
