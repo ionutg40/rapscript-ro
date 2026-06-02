@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RapScript RO — mock Nocturn (running)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0C0D10; --ink-raised:#15161B; --ink-line:#23252D;
+    --text:#F4F5F7; --text-secondary:#9AA0AC; --text-muted:#6B7180;
+    --accent:#7C5CFF; --accent-strong:#9479FF; --accent-wash:rgba(124,92,255,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--ink); color:var(--text);
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  /* eticheta de colt */
+  .brand{
+    position:fixed; top:24px; left:28px;
+    font-size:.8rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--text-secondary);
+  }
+  /* scena */
+  .stage{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:0 24px; position:relative;
+    /* cuvant la centru optic ~46% */
+    transform:translateY(-4vh);
+  }
+  /* singurul flirt cu glow: halo violet foarte discret in spatele cuvantului */
+  .stage::before{
+    content:""; position:absolute; width:60vw; height:60vw; max-width:680px; max-height:680px;
+    background:radial-gradient(circle, var(--accent-wash) 0%, transparent 62%);
+    filter:blur(40px); z-index:0; pointer-events:none;
+  }
+  .word{
+    position:relative; z-index:1;
+    font-weight:700; font-size:clamp(3.5rem,16vw,12rem); line-height:.95;
+    letter-spacing:-.02em; text-align:center;
+  }
+  .timer{
+    position:relative; z-index:1; margin-top:40px;
+    width:min(420px,70vw); height:4px; border-radius:9999px; background:var(--ink-line);
+    overflow:hidden;
+  }
+  .timer .fill{height:100%; width:62%; background:var(--accent); border-radius:9999px}
+  /* bara de controale - singura suprafata ridicata, material translucid */
+  .controls{
+    margin:0 auto 22px; width:min(720px,92vw);
+    display:flex; align-items:center; gap:18px;
+    padding:14px 18px; border-radius:16px;
+    background:rgba(21,22,27,.72); backdrop-filter:blur(16px) saturate(1.2);
+    border:1px solid var(--ink-line);
+    box-shadow:0 -8px 32px rgba(0,0,0,.45);
+  }
+  @supports not (backdrop-filter:blur(1px)){ .controls{background:var(--ink-raised)} }
+  .play{
+    flex:none; width:56px; height:56px; border-radius:9999px; border:none; cursor:pointer;
+    background:var(--accent); color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .play:hover{background:var(--accent-strong)}
+  .play svg{width:20px;height:20px;fill:var(--ink)}
+  /* segmented dificultate */
+  .seg{display:flex; background:var(--ink); border:1px solid var(--ink-line); border-radius:10px; padding:3px}
+  .seg button{
+    border:none; background:transparent; cursor:pointer; padding:8px 14px; border-radius:7px;
+    font-family:inherit; font-size:.8rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+  }
+  .seg button.active{background:var(--accent-wash); color:var(--text)}
+  /* slider viteza */
+  .speed{display:flex; align-items:center; gap:12px; margin-left:auto}
+  .speed input[type=range]{
+    -webkit-appearance:none; appearance:none; width:140px; height:4px; border-radius:9999px;
+    background:linear-gradient(to right,var(--accent) 0%,var(--accent) 42%,var(--ink-line) 42%,var(--ink-line) 100%);
+    outline:none;
+  }
+  .speed input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--text); cursor:pointer;
+    border:2px solid var(--ink);
+  }
+  .speed .readout{font-family:'Space Mono',monospace; font-size:.9rem; color:var(--text-secondary); min-width:42px}
+  .ghost{
+    flex:none; background:transparent; border:1px solid var(--ink-line); border-radius:10px; cursor:pointer;
+    color:var(--text-secondary); padding:10px; display:flex; align-items:center; justify-content:center;
+  }
+  .ghost:hover{color:var(--text)}
+  .ghost svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+  @media (max-width:640px){
+    .controls{flex-wrap:wrap; justify-content:center; gap:12px}
+    .speed{margin-left:0; order:3; width:100%; justify-content:center}
+  }
+</style>
+</head>
+<body>
+  <div class="brand">RapScript RO</div>
+
+  <div class="stage">
+    <div class="word">labirint</div>
+    <div class="timer"><div class="fill"></div></div>
+  </div>
+
+  <div class="controls">
+    <button class="play" aria-label="Pauză">
+      <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+    </button>
+
+    <div class="seg" role="group" aria-label="Dificultate">
+      <button>Începător</button>
+      <button class="active">Avansat</button>
+      <button>Profesionist</button>
+    </div>
+
+    <div class="speed">
+      <input type="range" min="2" max="12" step="0.5" value="5" aria-label="Viteză">
+      <span class="readout">5.0s</span>
+    </div>
+
+    <button class="ghost" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
+</body>
+</html>
