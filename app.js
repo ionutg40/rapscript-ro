@@ -32,7 +32,7 @@ const state = {
 
 // ---- Refs DOM (cache o dată) ----
 let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill;
-let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus, tokenInput, tokenSaveBtn;
+let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus, tokenPrompt, tokenInput, tokenSaveBtn;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
 
@@ -270,7 +270,8 @@ async function handleAddWord() {
   const v = validateNewWord(addInput.value);
   if (!v.ok) { setAddStatus(v.msg, 'err'); return; }
   if (!ghToken()) {
-    setAddStatus('configurează întâi token-ul GitHub (mai jos)', 'err');
+    if (tokenPrompt) tokenPrompt.hidden = false; // dezvăluie câmpul DOAR acum
+    setAddStatus('ai nevoie de un token GitHub o singură dată ↓', 'err');
     if (tokenInput) tokenInput.focus();
     return;
   }
@@ -365,7 +366,7 @@ function boot() {
   viewerTitle = byId('viewer-title'); viewerList = byId('viewer-list');
   viewerClose = byId('viewer-close'); viewerOverlay = byId('viewer-overlay');
   addInput = byId('add-input'); addBtn = byId('add-btn'); addStatus = byId('add-status');
-  tokenInput = byId('token-input'); tokenSaveBtn = byId('token-save');
+  tokenPrompt = byId('token-prompt'); tokenInput = byId('token-input'); tokenSaveBtn = byId('token-save');
   if (openViewerBtn && drawerEl) {
     updateViewerCount();
     openViewerBtn.addEventListener('click', openViewer);
@@ -376,7 +377,11 @@ function boot() {
     tokenSaveBtn.addEventListener('click', () => {
       try {
         const t = tokenInput.value.trim();
-        if (t) { localStorage.setItem(GH_TOKEN_KEY, t); tokenInput.value = ''; setAddStatus('token salvat (doar pe acest dispozitiv)', 'ok'); }
+        if (!t) { setAddStatus('lipește întâi token-ul', 'err'); return; }
+        localStorage.setItem(GH_TOKEN_KEY, t);
+        tokenInput.value = '';
+        if (tokenPrompt) tokenPrompt.hidden = true; // gata, dispare definitiv
+        setAddStatus('token salvat — apasă din nou „adaugă"', 'ok');
       } catch (e) { setAddStatus('nu pot salva token-ul (mod privat?)', 'err'); }
     });
   }
