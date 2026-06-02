@@ -2,6 +2,21 @@
 
 Tracker de proiect. Urmărim pașii BMad Method.
 
+## 📌 STARE LA PAUZĂ (2026-06-02) — proiect LIVRAT, în pauză
+
+**Live & funcțional:** `https://ionutg40.github.io/rapscript-ro/` — FR1-10, viewer + add partajat din UI.
+**Add prin Cloudflare Worker** (`rapscript-gh.ionutg40.workers.dev`), token `GH_TOKEN` ca secret pe Worker
+(zero token în browser). Lanț verificat end-to-end (POST→Worker→commit→CI regen→deploy). Repo sincron, `words.js` fresh.
+
+**NIMIC OBLIGATORIU rămas.** Opțional, când reiei:
+- [ ] **Turnstile** anti-bot pe Worker (`docs/worker-setup.md`) + rate-limit — endpoint public, recomandat la liniște.
+- [ ] **SM-3:** folosește app-ul la un freestyle real + dă URL-ul colegului (el nu config nimic — doar adaugă).
+- [ ] **Conținut:** re-leveling ~10 cuvinte (PRD OQ#1) · crește banca peste 417 (acum direct din UI).
+- [ ] **Polish:** README „cum rulezi/adaugi" · scoate CSS mort `.token-row` · consolidează docs D20-D24↔D25.
+- [ ] **Mentenanță (1×/an):** la „nu am putut salva" → token GitHub expirat → regenerează + updatează `GH_TOKEN` pe Worker.
+
+Detaliile complete ale build-ului mai jos.
+
 ## Unde suntem (2026-06-02)
 
 | Fază BMad | Status |
