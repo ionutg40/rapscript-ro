@@ -1,0 +1,63 @@
+/* RapScript RO — schelet (identitate Nocturn minimă; se îmbogățește în Epic 5) */
+
+/* Fonturi self-host, căi RELATIVE (D18) */
+@font-face {
+  font-family: "Fraunces";
+  src: url("assets/fonts/fraunces-ro.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("assets/fonts/ibm-plex-mono-ro-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("assets/fonts/ibm-plex-mono-ro-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+/* Tokeni Nocturn (subset; complet în Story 5.1) */
+:root {
+  --color-bg: #0B0B0F;
+  --color-ink: #F4F4F7;
+  --color-ink-dim: #9A9AA6;
+  --color-accent: #8B7BFF;
+  --space-md: 16px;
+}
+
+* { margin: 0; box-sizing: border-box; }
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.stage { text-align: center; padding: var(--space-md); }
+
+/* hero serif editorial — fallback serif dacă woff2 lipsește (degradare citibilă, nu invizibil) */
+.hero-word {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-size: clamp(4rem, 18vw, 13rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.message {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--color-ink-dim);
+  letter-spacing: 0.12em;
+  margin-top: var(--space-md);
+}
