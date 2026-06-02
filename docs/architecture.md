@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, 5, 6]
 inputDocuments:
   - docs/brief.md
   - docs/addendum.md
@@ -133,12 +133,15 @@ NU `gh repo create` (repo-ul există).
   `<script src="words.js">`. Motiv: `fetch` pe `file://` pică pe CORS → ar strica portabilitatea
   dublu-click (NFR Portability). Adevăr fundamental, nu preferință.
 - **D3 ▲** — `words.js` derivat determinist din JSON printr-un `gen_words.py` care: citește
-  **`d['levels']`** (ignoră `meta`/`rubrics`), sortează cheile (diff curat), **asertă disjuncție
-  cross-nivel** (fail loud dacă un cuvânt apare în 2 niveluri), scrie `WORD_BANK` (cele 3 array-uri) +
-  `WORD_BANK_META = {count, hash, generated}` unde **`count` = suma lungimilor nivelurilor**
-  (derivat, NU copiat din `meta.counts` care poate driftà), și pune header `// AUTO-GENERAT din
-  wordbank.json — NU EDITA` **(E1)**. Generatorul e **singurul scriitor** al lui `words.js`.
-  `words.js` e **commited în git** (nu gitignored — Pages îl servește). Rulat manual la fiecare update.
+  **`d['levels']`** (ignoră `meta`/`rubrics`), sortează cheile (diff curat), **validează banca**
+  (niveluri ne-goale, ≥2 cuvinte, fără dups intra+cross-nivel) și **refuză să scrie pe date stricate**
+  (date proaste = ne-livrabile), scrie `WORD_BANK` (cele 3 array-uri) + `WORD_BANK_META =
+  {count, hash, generated}` (`count` = suma nivelurilor, derivat NU din `meta.counts`), header
+  `// AUTO-GENERAT din wordbank.json — NU EDITA` **(E1)**, **și rescrie `?v=<hash>` în `index.html`**
+  (owner unic al words.js ȘI al hash-ului din script tag — zero pas manual). Mod **`--check`**:
+  recalculează hash din `wordbank.json`, compară cu META din `words.js`, exit non-zero la mismatch
+  (prinde „uitat regenerat" ȘI „editat de mână"). Singurul scriitor al `words.js`; `words.js`
+  **commited** (nu gitignored — Pages îl servește).
 - **D4 ▲** — Validare la load: fiecare nivel **≥2 cuvinte** (susține D6) + ne-gol + fără dups
   intra-nivel; **loghează `WORD_BANK_META.count`** la load (semnal vizibil dacă e stale — „fail loud");
   lipsă/mismatch/`undefined` → stare `error` grațioasă.
@@ -169,9 +172,12 @@ NU `gh repo create` (repo-ul există).
   stare `error`), NU try/catch (script-tag-ul nu aruncă). try/catch DOAR la `JSON.parse`/`setItem`
   localStorage → **defaults silențios** (nu error state). Două căi distincte. Mesaj RO în `messageEl`,
   detaliu în `console.error`, zero `console.log` livrat.
-- **D11 ▲** — Fără framework de test în v1; `validate.js` rulat manual acoperă **funcțiile pure**
-  (`pickWord`, `clampDelay`, sanity bancă). Documentează explicit **ce NU acoperă** (timer/render →
-  `console.assert` guards). Opțional: pre-commit hook ca verificarea să fie neuitabilă.
+- **D11 ▲** — Fără framework de test ȘI **fără Node** (ar contrazice „zero npm / dublu-click `file://`"
+  și user-ul n-are Node). Verificarea în 3 straturi, toate fără runtime nou: (1) **sanity bancă** în
+  `gen_words.py` (Python, build-time, refuză date proaste — D3); (2) **teste funcții pure**
+  (`pickWord`, `clampDelay`) **în browser via `?test=1`** în index.html (bloc inline, zero Node);
+  (3) **freshness gate** `gen_words.py --check` rulat de un **pre-commit hook**. Documentează ce NU
+  acoperă (timer/render → `console.assert` dev-aid). *(Scos `validate.js` ca fișier Node separat.)*
 - **D12 ▲** — Anti-race prin `state.ready` (inițial `false`); un singur `render()` citește `ready`
   → placeholder `–` dimmed + `btn-play-pause` disabled până ready. Fără `disabled` ad-hoc (respectă D7).
 - **D13** — `clampDelay()` clampează viteza 2–12s pe slider ȘI pe valoarea citită din localStorage (FR-5).
@@ -188,12 +194,16 @@ NU `gh repo create` (repo-ul există).
 
 - **D17 ▲** — Host: GitHub Pages, branch `main`, path `/`, sub `/rapscript-ro/`. **Căi RELATIVE**
   peste tot (`href="style.css"`, nu `/style.css`). `.nojekyll` gol în root (oprește Jekyll).
-  **Cache-bust** `words.js?v=<hash>` unde `<hash>` = `WORD_BANK_META.hash`/`generated` (NU `count` —
-  edit cu count constant, ex. typo-fix, ar servi stale tăcut; dovedit de fixes-log-ul băncii).
+  **Cache-bust** `words.js?v=<hash>` (`<hash>` = `WORD_BANK_META.hash`, NU `count` — edit cu count
+  constant ar servi stale tăcut). Hash-ul din script tag e **rescris de `gen_words.py`** (D3), nu de
+  mână (altfel sync-trap). Pe `file://` `?v=` e no-op; complexitatea există doar pentru Pages.
 - **D18 ▲** — **Self-host woff2** (Fraunces serif hero + IBM Plex Mono UI) în `assets/fonts/` via
-  `@font-face`, subset latin+latin-ext, `font-display: swap`; zero request extern (coerent cu D2
-  offline). `font-family` consumator are **fallback explicit** (serif / monospace) ca un woff2 lipsă
-  să degradeze la text citibil, nu invizibil **(E3)**. `lang="ro"` pe `<html>`.
+  `@font-face`, `font-display: swap`; zero request extern (coerent cu D2 offline). **Un singur fișier
+  per familie, subset pe AMBELE range-uri latin+latin-ext** (orice cuvânt RO poate avea diacritice →
+  range-splitting nu câștigă nimic); nume `fraunces-ro.woff2` / `ibm-plex-mono-ro.woff2` (NU
+  `-latin-ext`, care ar implica felia fără ASCII). Build asertă că glifele `ș ț ă â î` există (E4 =
+  poartă de build). `font-family` consumator are **fallback explicit** (serif / monospace) ca un woff2
+  lipsă să degradeze la text citibil, nu invizibil **(E3)**. `lang="ro"` pe `<html>`.
   **Criteriu de acceptare gating (E4):** pe site-ul live, cu `lang=ro`, `ș/ț` se randează comma-below
   (NU sedilă) — verificat, nu presupus. Toată valoarea vizuală depinde de asta (5 Whys).
   **Semnal fail-loud (woff2 404):** un fallback care randează vizibil dar cu sedilă ar înfrânge TĂCUT
@@ -327,3 +337,70 @@ render();
 **Anti-pattern:** `wordEl.textContent = ...` direct în handler (sare peste state/pickWord/render →
 pierzi FR-3); SAU `render()` de două ori în același handler; SAU `restartTimer()` care trage un tick
 sincron PLUS render-ul de la finalul handlerului = dublu-render.
+
+## Project Structure & Boundaries
+
+### Complete Project Directory Structure
+
+```
+rapscript-ro/
+├── .nojekyll              # GOL — oprește Jekyll pe Pages (D17)
+├── .gitattributes         # *.woff2 -text -diff (binar safe; altfel LFS/text → 0 bytes pe Pages)
+├── .gitignore             # + comentariu: words.js e generat dar TREBUIE commited
+├── README.md              # există
+├── index.html             # <html lang="ro">; <script src="words.js?v=hash"> ÎNAINTE de app.js;
+│                          #   bloc de teste inline activat prin ?test=1 (pickWord/clampDelay)
+├── style.css              # :root tokens Nocturn + @font-face + componente (DESIGN.md)
+├── app.js                 # state, render(), pickWord, clampDelay, handlere, boot
+├── words.js               # AUTO-GENERAT — NU EDITA; COMMITED; gen rescrie și ?v= din index.html
+├── gen_words.py           # build: levels → WORD_BANK+META; validează+refuză date proaste;
+│                          #   --check freshness; owner words.js ȘI hash index.html (D3/D11)
+├── assets/
+│   ├── wordbank.json      # SURSA de adevăr (D1): {meta, rubrics, levels{...}}
+│   └── fonts/
+│       ├── fraunces-ro.woff2          # serif hero, subset latin+latin-ext (D18)
+│       └── ibm-plex-mono-ro.woff2     # UI mono, subset latin+latin-ext (D18)
+└── docs/                  # planning artifacts (public pe Pages — repo public oricum)
+```
+
+> NU mai există `validate.js` — verificarea s-a mutat în `gen_words.py` (sanity) + `?test=1` în browser
+> (funcții pure), fără Node (D11).
+
+### Architectural Boundaries
+
+Singura graniță reală = **DATELE (build-time):** `wordbank.json` → `gen_words.py` → `words.js`,
+direcție unică (words.js auto-generat, niciodată editat invers). **N/A:** API / service / DB / auth
+boundaries — nu există. **Runtime (un singur strat):** `state` (sursă) → `render(state)` (DOM) →
+effect helpers (timer / persistență / fullscreen). Vezi Implementation Patterns.
+
+### Decizii de layout (rațiune explicită)
+
+- **Flat root (nu `tools/`):** deliberat, pentru învățare — un începător vede toate fișierele dintr-o
+  privire; un folder de tooling adaugă o cale de gândit pentru ~zero câștig. Granița build/runtime
+  trăiește în fluxul de date, NU în layout-ul de foldere.
+- **Split 3-fișiere (html/css/js) = scaffold pedagogic, NU necesitate tehnică.** Single-file inline ar
+  fi la fel de portabil (`file://` + Pages), poate mai robust (un punct de cale-relativă + cache mai
+  puțin). Split-ul se justifică DOAR ca separare de concerns pentru învățare — nu-l re-justifica pe
+  „performanță"/„caching" (nu se aplică unui static de 3 fișiere).
+
+### Requirements to Structure Mapping
+
+| FR | Trăiește în |
+|---|---|
+| FR-1/2/3 generator | `app.js` (`pickWord`, `handleTick`, `render`) |
+| FR-4 play/pause | `app.js` `handlePlayClick` + `index.html` `btn-play-pause` |
+| FR-5 viteză | `app.js` `handleSpeedChange`/`clampDelay` + `index.html` `speed-slider` |
+| FR-6 nivel | `app.js` `handleLevelClick` + `index.html` `level-segment` |
+| FR-7 persistență | `app.js` `saveSettings`/`loadSettings` (localStorage) |
+| FR-8 fullscreen | `app.js` `handleFullscreen` + `index.html` `btn-fullscreen` |
+| FR-9 responsive | `style.css` (clamp, media queries) |
+| FR-10 word bank | `assets/wordbank.json` → `words.js` (`gen_words.py`) |
+
+### Development Workflow
+
+- **Dev:** dublu-click `index.html` (`file://`, fără server). **Teste:** `index.html?test=1` (browser,
+  fără Node) rulează asserturile pe `pickWord`/`clampDelay`.
+- **Update bancă:** editezi `wordbank.json` → `python gen_words.py` (validează, scrie `words.js` +
+  rescrie `?v=`) → commit ambele.
+- **Gate:** pre-commit hook rulează `gen_words.py --check` (freshness — prinde uitat-regenerat / editat-de-mână).
+- **Deploy:** push `main` → GitHub Pages servește din root sub `/rapscript-ro/`.
