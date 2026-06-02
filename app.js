@@ -10,7 +10,7 @@ const LS_KEY = 'rapscript:settings';
 
 // ---- Backend: Cloudflare Worker (D20 v2): tokenul stă pe Worker, NU în browser ----
 // După ce deployezi Worker-ul (vezi docs/worker-setup.md), pune aici URL-ul lui.
-const WORKER_URL = '';        // ex: 'https://rapscript-gh.<contul-tău>.workers.dev'
+const WORKER_URL = 'https://rapscript-gh.ionutg40.workers.dev';
 const TURNSTILE_SITEKEY = ''; // (opțional) site key Cloudflare Turnstile (anti-bot)
 const LEVELS = ['incepator', 'avansat', 'profesionist'];
 
