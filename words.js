@@ -291,6 +291,7 @@ const WORD_BANK = {
     "vulpe",
     "vânt",
     "zahăr",
+    "zztestworker",
     "zăpadă",
     "șarpe"
   ],
@@ -425,4 +426,4 @@ const WORD_BANK = {
   ]
 };
 
-const WORD_BANK_META = { count: 417, hash: "31022ac2b9138bb1982f71907be4463d5baca6fd3ddefe1381cb9ec69740e766" };
+const WORD_BANK_META = { count: 418, hash: "350b68f424c64debc6561572c0d23cf37d550a3a57e5d8ceb279562a8a8d72d2" };
