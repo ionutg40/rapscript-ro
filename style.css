@@ -26,8 +26,13 @@
   --color-ink: #F4F4F7;
   --color-ink-dim: #9A9AA6;
   --color-accent: #8B7BFF;
+  --color-danger: #F0717A;
   --space-md: 16px;
 }
+
+/* stare de eroare: ascunde cuvântul, mesaj danger (fail-loud, D10) */
+body.is-error .hero-word { display: none; }
+body.is-error .message { color: var(--color-danger); }
 
 * { margin: 0; box-sizing: border-box; }
 
