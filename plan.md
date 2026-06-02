@@ -14,9 +14,10 @@ Tracker de proiect. Urmărim pașii BMad Method.
 | 3 - Implementation readiness | ✅ **READY** → `docs/implementation-readiness-report-2026-06-02.md` (0 blockers, 3 findings low) |
 | 4 - Build | 🟢 **ÎN CURS** — Epic 1 ✅ LIVE (`https://ionutg40.github.io/rapscript-ro/`) |
 
-**Build progress:** Epic 1 COMPLETE — Story 1.1 (Fraunces verificat RO comma-below) · 1.2 (schelet live pe
-Pages, căi relative validate) · 1.3 (fonturi self-host woff2 + .gitattributes). Următor: **Epic 2** (word
-bank: `gen_words.py` → `words.js`). `gotchas.md`: 3 lecții (țintă SM-2 ≥8).
+**Build progress:**
+- Epic 1 ✅ — 1.1 (Fraunces verificat) · 1.2 (schelet live) · 1.3 (fonturi self-host).
+- Epic 2 ✅ — 2.1 (`gen_words.py`→`words.js` 417) · 2.2 (încărcat live + guard) · 2.3 (CI freshness gate = success).
+- Următor: **Epic 3** (inima: `app.js` — state, render(), pickWord, timer). `gotchas.md`: 3 lecții (țintă ≥8).
 
 > **Arhitectura (2026-06-02):** 8 pași BMad cap-coadă. Întărită prin 2 baterii elicitare (45 findings)
 > + 2 party + Code Review Gauntlet + review 7 agenți + sweep Occam (35 items) + Delphi final (6/6 SHIP).
