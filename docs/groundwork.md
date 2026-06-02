@@ -19,6 +19,8 @@ Pipeline: generate (~130/nivel) → editor sever (elimină englezisme, nume prop
 
 ## 2. Direcția de design (input fază UX) — câștigătoare juriu: **Underground Brutalist / „Subsol"** (8.5/10)
 
+> ⚠️ **PIVOT 2026-05-31 (decizie user, faza UX):** direcția Underground Brutalist e **superseded**. fasty a ales o direcție nouă: **Premium Clean + accent purple chirurgical** (sleek/modern, grad Linear/Vercel — dark-premium, UN singur accent purple, tipografie confidentă, depth subtil prin umbre reale NU sticlă blurată, motion crisp, contrast-safe). Reguli anti-slop păstrate: ZERO gradient mov→albastru, ZERO glassmorphism-ca-estetică, ZERO neon glow smeared, ZERO emoji, un singur accent, ierarhie reală. Designul se formalizează în `bmad-create-ux-design`. Conceptul brutalist de mai jos rămâne ca referință/istoric.
+
 Vibe: pivniță de bloc, foaie xeroxată prinsă în pioneze, cuvântul izbește ecranul ca un punchline scris cu Sharpie. Anti-SaaS, anti-slop.
 
 - **Paletă:** hârtie `#F2F0EB` + cerneală `#0A0A0A`, UN singur accent portocaliu `#FF3B00` (folosit zgârcit: doar pe „REC ●" și pe print-misalignment).

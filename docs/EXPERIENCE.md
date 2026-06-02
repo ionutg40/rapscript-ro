@@ -1,7 +1,7 @@
 ---
 name: RapScript RO — Experience
 description: Behavior, states, interactions and flows for the single-screen RO freestyle word generator. Visual identity lives in DESIGN.md (Nocturn).
-status: draft
+status: final
 created: 2026-06-02
 updated: 2026-06-02
 sources:
@@ -64,17 +64,20 @@ Fără semne de exclamare. Fără „Oops". Eroarea spune ce s-a întâmplat + c
 Specul vizual e în DESIGN.md › Components; aici e doar comportamentul.
 
 - **hero-word** — afișează un cuvânt din nivelul activ. Nu e interactiv (nu se dă click pe el). Se
-  schimbă singur (playing) sau rămâne fix (paused). Aria: vezi Accessibility.
+  schimbă singur (playing) sau rămâne fix (paused). **Fără repetare imediată (FR-3):** la fiecare
+  selecție, cuvântul nou trebuie să fie ≠ cel afișat anterior cât timp nivelul are ≥2 cuvinte (re-trage
+  până diferă). Aria: vezi Accessibility.
 - **timer-bar** — reprezintă progresul către următorul cuvânt: pornește gol/plin și se
   golește/umple linear pe durata `T`. La pauză îngheață. La schimbarea vitezei sau a nivelului, se
   resetează și repornește. E feedback-ul că „ceva se întâmplă", fără numere care distrag.
-- **button play/pause** — un singur buton care comută starea (FR-4). Eticheta + glifa reflectă
+- **btn-play-pause** — un singur buton care comută starea (FR-4). Eticheta + glifa reflectă
   *acțiunea următoare* (`▶ pornește` când e oprit, `❚❚ pauză` când merge).
 - **speed-slider** — `range`, ~2–12s (FR-5). Drag live: valoarea-text se actualizează în timp real;
   la eliberare (sau pe `input`) repornește numărătoarea cu noua valoare. Valoarea clampată la interval.
+  Nume accesibil obligatoriu: `aria-label="viteză"` + `aria-valuetext="<N> secunde"` (vezi Accessibility).
 - **level-segment** — 3 segmente exclusive (FR-6). Click pe unul: devine activ, iar **următorul**
   cuvânt vine din noul nivel (cuvântul curent rămâne până la următorul tick — fără salt brusc).
-- **fullscreen-button** — comută fullscreen pe browsere care suportă (FR-8); feature-detect → ascuns
+- **btn-fullscreen** — comută fullscreen pe browsere care suportă (FR-8); feature-detect → ascuns
   pe iPhone, sau degradare la pseudo-fullscreen CSS. Niciodată buton care „nu face nimic".
 
 ## State Patterns
@@ -98,8 +101,11 @@ hover (`surface`→`surface-2`), active/pressed (`accent-dim`), focus-visible (i
 ## Interaction Primitives
 
 - **Toggle play/pause** — click pe buton SAU tasta `Space`. Comută loading-safe (no-op dacă loading/error).
-- **Reglaj viteză** — drag pe slider (mouse/touch) sau săgeți `←/→` când e focus. Live, clamp 2–12s,
-  repornește numărătoarea. Persistă (FR-7).
+  **Scoping (anti-dublă-declanșare):** handler-ul global de `Space` se aplică doar când focus-ul NU e
+  deja pe un control nativ (buton/slider) — altfel butonul focusat ar primi și activarea nativă, și pe
+  cea globală. Concret: ignoră `Space`/săgeți dacă `event.target` e `<button>`/`<input>`.
+- **Reglaj viteză** — drag pe slider (mouse/touch) sau săgeți `←/→` **când slider-ul are focus** (native,
+  nu prin handler global). Live, clamp 2–12s, repornește numărătoarea. Persistă (FR-7).
 - **Schimbare nivel** — click pe segment sau `Tab`+`Enter`. Imediat pentru *următorul* cuvânt. Persistă.
 - **Fullscreen** — click pe buton (unde există). `Esc` iese (comportament nativ).
 - **Tranziția la cuvânt nou (motion crisp, premium):** cuvântul nou intră cu `translateY(12px→0)` +
@@ -112,12 +118,17 @@ hover (`surface`→`surface-2`), active/pressed (`accent-dim`), focus-visible (i
 - **Contrast:** perechile text/fond trec AA (vezi DESIGN.md › Colors). Accentul purple DOAR pe forme
   și text mare-bold, niciodată pe text mic (regulă moștenită din groundwork §5).
 - **Tastatură:** play/pause, slider, segmente și fullscreen complet operabile fără mouse; focus-visible
-  vizibil (inel `accent`). Ordine de tab logică: nivel → controale.
+  vizibil (inel `accent`, 2px offset — contrast suficient față de `surface`/`surface-2`). Ordine de tab
+  logică: nivel → controale.
 - **`lang="ro"`** pe `<html>` (corectează randarea diacriticelor — vezi DESIGN.md NOTE).
-- **Cuvântul-erou și screen-readere:** `aria-live` pe hero setat `off` în playing (un cuvânt nou la
-  câteva secunde ar inunda un cititor de ecran și nu servește user-ul țintă — un freestyler vizual).
-  La pauză cuvântul e citibil normal ca text. **[ASSUMPTION]** — fasty (user #1) e vizual, nu pe SR;
-  revizuit dacă apare nevoie reală.
+- **Slider accesibil:** `aria-label="viteză"` (range gol s-ar anunța doar „slider, 4", fără nume/unitate)
+  + `aria-valuetext` care spune valoarea în clar: `"4 secunde"`. Nu doar operabil — inteligibil.
+- **Cuvântul-erou și screen-readere (NU excludere totală):** în **playing**, `aria-live="off"` pe hero
+  (un cuvânt nou la câteva secunde ar inunda un cititor de ecran). DAR ca să nu livrăm o excludere
+  totală a singurului output al app-ului: în **paused** cuvântul e focusabil (`tabindex`) și anunțat
+  normal ca text, iar un mic toggle opt-in (mono, în bară-sus) comută hero pe `aria-live="polite"`
+  pentru cine vrea citire continuă. **[ASSUMPTION]** default off; toggle-ul poate fi deferat post-v1,
+  dar focus-pe-pauză NU (e fix-ul minim care scoate excluderea).
 - **Reduced motion** respectat (vezi mai sus).
 - **Touch targets** ≥44px pe telefon (FR-9).
 

@@ -9,7 +9,7 @@ updated: 2026-05-31
 
 ## 0. Document Purpose
 
-Acest PRD detaliază features-urile, requirements-urile funcționale și constraint-urile pentru **v1 ("inima")** a RapScript RO — o aplicație web care generează cuvinte random în română pentru antrenament de freestyle rap. Construiește pe brief-ul aprobat (`briefs/brief-rapscript-ro-2026-05-31/brief.md`) și pe groundwork-ul verificat adversarial (`/home/fasty/rapscript-ro/docs/groundwork.md`, în special §5). Audience: fasty (builder + user #1). Downstream: `bmad-create-ux-design` (design Underground Brutalist) și `bmad-create-architecture` (stack vanilla + format date).
+Acest PRD detaliază features-urile, requirements-urile funcționale și constraint-urile pentru **v1 ("inima")** a RapScript RO — o aplicație web care generează cuvinte random în română pentru antrenament de freestyle rap. Construiește pe brief-ul aprobat (`briefs/brief-rapscript-ro-2026-05-31/brief.md`) și pe groundwork-ul verificat adversarial (`/home/fasty/rapscript-ro/docs/groundwork.md`, în special §5). Audience: fasty (builder + user #1). Downstream: design-ul **Nocturn** (Premium Clean dark + accent purple — vezi `docs/DESIGN.md` + `docs/EXPERIENCE.md`; direcția Brutalist din groundwork e superseded la pivotul din 2026-05-31) și `bmad-create-architecture` (stack vanilla + format date).
 
 Miză: proiect de **build/învățare**, solo. PRD scurt, pe măsură.
 
@@ -94,7 +94,7 @@ Funcționează pe telefon, desktop și ecran mare.
 ## 4. Cross-Cutting NFRs
 
 - **Performance.** Cuvântul nou apare instant la schimbare; intervalul respectă valoarea aleasă (precizie de secundă, nu frame-perfect).
-- **Accesibilitate.** Contrast WCAG: text citibil pe perechi care trec AA (cerneală pe hârtie = 17:1). Accentul portocaliu și griul DOAR pe text mare-bold sau forme, niciodată pe text mic.
+- **Accesibilitate.** Contrast WCAG: text citibil pe perechi care trec AA (ink pe bg Nocturn = 17.9:1, verificat). Accentul purple `#8B7BFF` (5.96:1) și griurile dim DOAR pe text mare-bold sau forme, niciodată pe text mic. Vezi `docs/DESIGN.md` › Colors + `docs/validation-report.md`.
 - **Reliability.** Refuzul fullscreen (ex. iOS) nu crapă aplicația. Un nivel ales rămâne stabil până la schimbare.
 - **Maintainability.** Datele (word bank) separate de logică; `words.js` derivat determinist din `assets/wordbank.json`, nu copie tastată manual.
 - **Privacy.** Local-only. Zero network în afară de fonturile web. Fără cont, fără cloud, fără tracking.
@@ -124,7 +124,7 @@ Funcționează pe telefon, desktop și ecran mare.
 - **Fullscreen pe iPhone** = no-op pentru elemente arbitrare → tratat ca enhancement (feature-detect + degradare CSS / „Add to Home Screen"). NU feature de bază garantat pe mobil.
 - **Word bank ca diferențiator** — calitatea conținutului RO e produsul; seed-ul de 417 e fundație, nu plafon. Sursa de extindere viitoare (manual / AI+curat / scraping) = decizie ulterioară.
 - **Stack & format date** — vanilla HTML/CSS/JS + GitHub Pages e recomandarea de groundwork; se confirmă oficial în `bmad-create-architecture`. `words.js` derivat din `wordbank.json` (fetch pe `file://` pică CORS).
-- **Design** — Underground Brutalist „Subsol"; se rafinează în `bmad-create-ux-design`. Identitatea NU depinde de textura xerox (scoasă din v1).
+- **Design** — **Nocturn** (Premium Clean dark + accent purple chirurgical; serif editorial pentru cuvânt, mono pentru UI). Formalizat în `docs/DESIGN.md` + `docs/EXPERIENCE.md`. Direcția veche Underground Brutalist „Subsol" e superseded (pivot user 2026-05-31).
 
 ## 8. Open Questions
 

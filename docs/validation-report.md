@@ -79,6 +79,22 @@ deja pe controlul nativ, sau atașează pe controale, nu pe document global).
 Detalii în `review-rubric.md` și `review-accessibility.md` (formulări, ratio-uri exacte, touch targets
 confirmate ≥44px, reduced-motion ok, lang=ro ok).
 
+## Rezolvare (2026-06-02)
+
+Toate findings critice + high + medium aplicate ca Update pe spine (status → `final`):
+
+- ✅ **FR-3** scris ca regulă comportamentală pe `hero-word` (EXPERIENCE.md).
+- ✅ **Nume componente unificate** verbatim în ambele fișiere: `hero-word`, `timer-bar`,
+  `btn-play-pause`, `btn-fullscreen`, `speed-slider`, `level-segment`, `message`.
+- ✅ **aria-live** — nu mai e excludere totală: focus-pe-pauză (anunțat) + toggle opt-in `polite`.
+- ✅ **Slider** — `aria-label="viteză"` + `aria-valuetext="<N> secunde"`.
+- ✅ **`ink-faint`** scopat la non-text; sub-textul de loading mutat pe `ink-dim` (AA).
+- ✅ **Handlere `Space`/săgeți** scopate (ignoră dacă target e button/input nativ).
+- ✅ **`danger`** ratio declarat (6.87:1); numere contrast actualizate la valorile verificate.
+- ✅ **PRD §0/§4/§7** corectat de la Brutalist la Nocturn.
+
+Low/minor (formulări fine) lăsate; nu blochează arhitectura.
+
 ## Reviewer files
 
 - `docs/review-rubric.md`

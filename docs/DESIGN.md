@@ -1,7 +1,7 @@
 ---
 name: Nocturn
 description: Premium-clean dark identity for RapScript RO — editorial serif word over a near-black stage, one surgical purple accent, real depth (no glass, no neon).
-status: draft
+status: final
 created: 2026-06-02
 updated: 2026-06-02
 colors:
@@ -72,24 +72,33 @@ components:
     fill: '{colors.accent}'
     height: 3px
     radius: '{rounded.full}'
-  button-primary:
+  btn-play-pause:
     bg: '{colors.surface}'
     border: 1px solid '{colors.border}'
     color: '{colors.ink}'
     radius: '{rounded.md}'
     accent-glyph: '{colors.accent}'
-  level-segment-active:
-    bg: '{colors.surface-2}'
+  btn-fullscreen:
+    bg: '{colors.surface}'
+    border: 1px solid '{colors.border}'
     color: '{colors.ink}'
-    underline: '{colors.accent}'
-  level-segment-idle:
-    bg: transparent
-    color: '{colors.ink-dim}'
+    radius: '{rounded.md}'
+    icon: '{colors.ink-dim}'
   speed-slider:
     track: '{colors.surface-2}'
     fill: '{colors.accent}'
     thumb: '{colors.ink}'
     thumb-radius: '{rounded.full}'
+  level-segment:
+    bg-active: '{colors.surface-2}'
+    bg-idle: transparent
+    color-active: '{colors.ink}'
+    color-idle: '{colors.ink-dim}'
+    underline-active: '{colors.accent}'
+  message:
+    color-info: '{colors.ink-dim}'
+    color-error: '{colors.danger}'
+    font: '{typography.message}'
   focus-ring:
     color: '{colors.accent}'
     width: 2px
@@ -125,16 +134,19 @@ Paleta e o singură familie de neutre reci foarte întunecate + un accent.
   Controalele (butoane, segmente) urcă cu un ton; hover/activ mai urcă unul. Asta E elevația aici.
 - **`border` `#26262F`** — hairline-uri de 1px care separă fără să strige. Niciodată mai deschis.
 - **`ink` `#F4F4F7`** — alb cald-rece, NU `#FFFFFF` (albul pur pe negru vibrează). Cuvântul-erou și
-  textul primar. Contrast pe `bg` ≈ 18:1 (AAA).
+  textul primar. Contrast pe `bg` **17.9:1** (AAA, verificat).
 - **`ink-dim` `#9A9AA6`** — voce secundară: label-ul de nivel, valoarea timer-ului în repaus,
-  hint-uri. ≈ 7.3:1 pe `bg` (AA+).
-- **`ink-faint` `#5A5A66`** — disabled, placeholder (`–` la loading), elemente inactive.
+  hint-uri, **și sub-textul de loading citibil** (`se încarcă cuvintele…`). **7.06:1** pe `bg` (AA+, verificat).
+- **`ink-faint` `#5A5A66`** — **doar non-text:** glifa-placeholder mare (`–`), iconuri disabled, borduri
+  inactive. **2.89:1 pe `bg` — pică AA pentru text**, deci NU se folosește pe niciun text citibil
+  (acela merge pe `ink-dim`). Permis doar pe forme/glife mari sau elemente exempte WCAG (disabled).
 - **`accent` `#8B7BFF`** — **singurul accent.** Purple, premium. Apare DOAR pe: umplerea bării de
   timer, segmentul de nivel activ (underline), inelul de focus, triunghiul ▶ din butonul Play,
-  fill-ul slider-ului. Regulă de contrast: accentul e permis doar pe **forme și pe text mare-bold**,
-  niciodată pe text mic (≈5.4:1 — sigur pe shapes/large, riscant pe corp mic).
+  fill-ul slider-ului. **5.96:1 pe `bg` (verificat)** — permis pe **forme și pe text mare-bold**,
+  evitat pe text mic.
 - **`accent-dim` `#6E5CF0`** — starea pressed/active a accentului.
-- **`danger` `#F0717A`** — exclusiv pentru mesajul de eroare RO. Nu e parte din identitate, e un semnal.
+- **`danger` `#F0717A`** — exclusiv pentru mesajul de eroare RO. **6.87:1 pe `bg` (AA, verificat).**
+  Nu e parte din identitate, e un semnal.
 
 **Nu există** a doua culoare de brand, gradient, sau „accent secundar". Disciplina e produsul.
 
@@ -181,13 +193,16 @@ suficient cât să nu fie brutal, drept suficient cât să nu fie jucărie.
   era din brutalist). Tranziția la cuvânt nou: vezi `EXPERIENCE.md` › Interaction Primitives.
 - **timer-bar** — linie de 3px lățime plină, track `{colors.surface-2}`, fill `{colors.accent}`,
   capete `{rounded.full}`. Se golește/umple pe durata intervalului; e singurul „ceas" vizibil.
-- **button-primary** (Play/Pause, Fullscreen) — `{colors.surface}`, border 1px `{colors.border}`,
-  text `{colors.ink}` mono. Glifa ▶/❚❚ în `{colors.accent}`. Hover → `{colors.surface-2}`.
-- **level-segment** — selector în 3 (începător/avansat/profesionist). Activ: `surface-2` +
+- **btn-play-pause** — `{colors.surface}`, border 1px `{colors.border}`, text `{colors.ink}` mono.
+  Glifa ▶/❚❚ în `{colors.accent}`. Hover → `{colors.surface-2}`.
+- **btn-fullscreen** — aceeași bază vizuală ca `btn-play-pause`; iconul în `{colors.ink-dim}` (nu
+  accent — nu e acțiune primară). Ascuns când Fullscreen API lipsește.
+- **level-segment** — selector în 3 (începător/avansat/profesionist). Activ: `bg-active` surface-2 +
   underline `{colors.accent}` + text `ink`. Idle: transparent + text `ink-dim`.
 - **speed-slider** — track `surface-2`, fill stânga `accent`, thumb `ink` cerc `full`. Valoarea în
   secunde lângă slider, `{typography.value}` `ink-dim`.
-- **message** — text mono `{typography.message}`; `ink-dim` pentru loading/hint, `danger` pentru eroare.
+- **message** — text mono `{typography.message}`; `color-info` `ink-dim` pentru loading/hint,
+  `color-error` `danger` pentru eroare.
 
 ## Do's and Don'ts
 

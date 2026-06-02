@@ -28,9 +28,14 @@ Jurnal de decizii din faza UX (bmad-ux, Sally). Canonic pe „de ce".
 7. **Output în `docs/`** (DESIGN.md, EXPERIENCE.md), nu în folderul adânc `{planning_artifacts}/ux-designs/`
    cerut de skill — consistent cu convenția proiectului (brief/prd/groundwork toate în `docs/`).
 
+## Validare + fix-uri (2026-06-02)
+
+Rulat Reviewer Gate (rubric walker + accessibility, 2 sub-agenți paraleli) → `docs/validation-report.md`.
+Contrast Nocturn verificat empiric: trece AA. Toate critice/high/medium aplicate ca Update; spine → `final`.
+Detalii în raport. PRD §0/§4/§7 corectat de la Brutalist la Nocturn.
+
 ## Deschis pentru fazele următoare
 
 - **[NOTE FOR ARCHITECTURE]** verifică cu fonttools că Fraunces + IBM Plex Mono randează comma-below pe
   `ș ț` + au `ă î â`; pune `lang="ro"`.
-- **PRD stale:** referințele „Underground Brutalist" din `prd.md` (§0/§4/§7) rămân neactualizate — de
-  decis dacă le corectăm sau lăsăm istoricul (sursa de adevăr pe design e DESIGN.md).
+- ~~**PRD stale:** referințele „Underground Brutalist" din `prd.md`~~ → REZOLVAT 2026-06-02 (corectat la Nocturn).
