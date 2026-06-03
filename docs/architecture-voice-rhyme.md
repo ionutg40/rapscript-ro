@@ -27,14 +27,15 @@ adversarială pe 52 agenți) trăiește în `docs/research-voice-rhyme-2026-06-0
 
 > **Sursă unică de adevăr (canonic 2026-06-03):** acest fișier a fost reconciliat dintr-un addendum
 > scris manual + un addendum scris autonom de workflow-ul `rapscript-voice-rhyme-research`. Diferențele
-> au fost îmbinate: fuzzy-snap (D36), descalificarea Whisper pe hardware-ul real (D31-B), fallback Groq
+> au fost îmbinate: snap pe bancă (D36; ulterior revizuit la snap-exact), descalificarea Whisper (D31-B), fallback Groq
 > (D38), plus evaluarea Gemini Live (eliminat) și Chirp 3 (D35). Nu mai există versiuni concurente.
 
 > **Meta-principiu moștenit (deasupra tuturor): „Fail loud, never silent."**
 > Pentru acest feature, modul #1 de eșec tăcut NU e crash-ul, nici latența — e **rima greșită afișată
 > cu încredere** când ASR-ul aude prost un cuvânt rap spontan (WER RO spontan: 25–62%). Asta e cel mai
-> prost mod de eșec pentru un tool de practică. Mitigarea centrală = **fuzzy-snap pe banca închisă
-> (D36)**. În plus, microfonul sparge prima oară granița pe care v1 o marcase `N/A` (rețea + hardware):
+> prost mod de eșec pentru un tool de practică. Mitigare (D36, revizuit): **snap EXACT pe bancă** (forma
+> curată) ȘI motorul rimează orice cuvânt (D42 + G2P) → preferăm cuvântul rostit, nu o ghicire forțată.
+> În plus, microfonul sparge prima oară granița pe care v1 o marcase `N/A` (rețea + hardware):
 > orice cădere (HTTPS lipsă, browser nesuportat, permisiune refuzată, rețea slabă) TREBUIE să lase un
 > semnal vizibil și să degradeze la tastare, niciodată microfon mort tăcut.
 
@@ -48,8 +49,8 @@ Două capabilități noi, **deliberat decuplate** (D26):
 
 1. **Motor de rimă** — dat un cuvânt RO, întoarce ≥5 sugestii (perfect → slant → asonanță) în <1ms,
    100% client-side.
-2. **Intrare vocală** — microfonul ascultă, transcrie cuvântul rostit, îl **snap-uiește la banca de
-   417** (D36), îl afișează „instant" (<1s) și alimentează motorul de rimă.
+2. **Intrare vocală** — microfonul ascultă, transcrie cuvântul rostit, îl snap-uiește **exact** pe bancă
+   (sau îl păstrează ca atare, D36), îl afișează „instant" (<1s) și alimentează motorul de rimă.
 
 ### Constatare de piață (research 2026-06-02, verificat adversarial)
 
@@ -71,8 +72,8 @@ Două capabilități noi, **deliberat decuplate** (D26):
 - **FR-14** — Intrare prin microfon — cuvântul rostit apare în <1s (best-effort, vezi NFR + D31).
 - **FR-15** — Selector de limbă (default `ro-RO`); auto-detect NU în v2 (D33).
 - **FR-16** — Orice cădere a vocii degradează grațios la tastare (FR-13), cu mesaj vizibil.
-- **FR-17 ▲ NEW** — Ieșirea ASR e **snap-uită la cel mai apropiat cuvânt din bancă** înainte de
-  afișare/lookup (D36); stare de incertitudine vizibilă când snap-ul e slab.
+- **FR-17 ▲ REVIZUIT** — Ieșirea ASR e snap-uită la bancă **doar pe potrivire exactă** (forma curată cu
+  diacritice); altfel **cuvântul rostit rămâne afișat** și e rimat prin G2P (D36).
 
 **Non-Functional (nou + impact pe cele existente):**
 - **Latență rimă:** <1ms (hash lookup) — bugetul „aceeași secundă" e rezolvat trivial de rimă; toată
@@ -91,7 +92,7 @@ Două capabilități noi, **deliberat decuplate** (D26):
 ### Cross-Cutting Concerns (nou)
 
 Granița nouă rețea/hardware (prima oară non-`N/A`) · secure-context (`https:` vs `file:`) · permisiuni
-mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · suport browser neuniform
+mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (snap exact, D36) · suport browser neuniform
 (Firefox 0, iOS-Chrome 0) · privacy audio (cloud vs local) · decuplarea rimă↔voce.
 
 ---
@@ -199,16 +200,20 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   eliminat. **✅ DECIS (2026-06-03): A (Web Speech `ro-RO`)** — Epic 8 v1 LIVRAT. Whisper (B) respins
   explicit de owner; C = tier premium condiționat (D40). _(Nimic din Epic 7 nu a depins de ea.)_
 
-- **D36 ▲ NEW — [CEA MAI IMPORTANTĂ] Snap ieșirea ASR la cel mai apropiat cuvânt din banca de 417,
-  ÎNAINTE de afișare/lookup.** Cel mai mare risc nu e latența — e **acuratețea ASR pe rap spontan**
-  (WER RO 25–62%). Un transcript greșit → rime greșite cu încredere, fără semnal de eroare. Pentru că
-  **vocabularul e închis (417)**, un fuzzy-match (Levenshtein / sufix comun, insensibil la diacritice)
-  pe ieșirea ASR transformă WER-ul open-domain într-un **clasificator pe 417 căi, aproape determinist**.
-  - `SpeechGrammarList` e mort în Chrome → snap **post-recunoaștere** în JS.
-  - Pe Groq (D38): pasează banca și ca `prompt` (bias).
-  - **Stare de incertitudine vizibilă** când scorul de snap e slab (fail-loud).
-  - **Gate de calitate:** vocea nu se lansează până un test live pe 20+ cuvinte din bancă, rostite în
-    cadență rap, nu atinge o rată de snap acceptabilă (prag de stabilit).
+- **D36 ▲▲ REVIZUIT (2026-06-03) — Snap EXACT pe bancă, altfel păstrează cuvântul rostit.** Ieșirea ASR
+  e potrivită cu banca ÎNAINTE de afișare/lookup, dar **DOAR potrivire exactă** (cu/fără diacritice →
+  forma curată din bancă, cu diacriticele corecte). **▲▲ Renunțat la fuzzy-match (Levenshtein/prag).**
+  - **De ce fuzzy a fost scos:** forța cuvinte CORECTE pe bancă greșit (`dans` → `dansa`, `liber` →
+    `libertate`). Premisa inițială („vocabular închis 417 → clasificator determinist") nu mai ține: prin
+    **D42 (backfill RoLEX) + G2P runtime, motorul rimează ORICE cuvânt**, nu doar cele 417. Deci nu mai
+    e nevoie să forțezi pe bancă pt a obține rime.
+  - **Comportament nou:** potrivire exactă → forma băncii; altfel → **cuvântul rostit rămâne afișat** și
+    e rimat prin G2P runtime. Preferăm cuvântul TĂU, nu o ghicire de bancă. (`SpeechGrammarList` e mort
+    în Chrome → snap post-recunoaștere în JS; pe Groq D38 banca rămâne `prompt`-bias.)
+  - **Trade-off acceptat:** un ASR greșit (cuvânt inexistent) rămâne pe ecran în loc să fie „corectat"
+    la un cuvânt din bancă — dar e mai puțin rău decât a transforma cuvinte corecte în altele. Acuratețea
+    ASR contează ceva mai mult acum (vezi nuanța din D40); rămâne `levenshtein()` în cod (teste + uz viitor).
+  - **Gate de calitate (rămas):** test live pe 20+ cuvinte rostite în cadență rap înainte de a declara voce-OK.
 
 - **D32 — Feature-detect + degradare grațioasă (oglindă la fullscreen v1).** Butonul de mic apare DOAR
   dacă `location.protocol === 'https:'` ȘI (`'webkitSpeechRecognition' in window || 'SpeechRecognition'
@@ -276,9 +281,10 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   - **Costul lui Chirp față de A:** proxy gRPC obligatoriu pe Hetzner (D35, Worker exclus), service-acc,
     cost $0.016/min, și leagă URL-ul live de uptime-ul VPS-ului. Sparge aceleași NFR ca A (HTTPS +
     audio→Google) → **zero câștig pe privacy/portabilitate** pt costul în plus.
-  - **Fuzzy-snap (D36) erodează exact avantajul lui Chirp:** fiindcă snap-uim ieșirea la banca închisă
-    de 417, o transcriere mai slabă se corectează aproape determinist (`abiss/abys → abis`). Acuratețea
-    brută superioară a lui Chirp contează mai puțin când vocabularul-țintă e mic și fix.
+  - **▲ Nuanță (D36 revizuit la snap-exact):** acuratețea ASR contează acum ceva mai mult (nu mai
+    „corectăm" fuzzy un transcript slab pe bancă). DAR motorul rimează orice cuvânt afișat (D42 + G2P),
+    deci un cuvânt auzit greșit-dar-real tot produce rime utile — pragul pentru a justifica Chirp rămâne
+    sus, dar nu mai e „erodat complet" de snap ca în varianta fuzzy. Trigger escaladare A→C neschimbat (mai jos).
   - **Trigger de escaladare A → C (singurul care justifică Chirp+Hetzner):** gate-ul D36 (20+ cuvinte
     rostite în cadență rap) **eșuează pe Web Speech** — rată de snap inacceptabilă pe rap RO rapid —
     SAU e nevoie obligatorie de Firefox/iOS-Chrome, SAU de procesare server-side a transcriptului.
@@ -341,9 +347,11 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   - *Cut din MVP:* mic, VAD, selector limbă, cascadă slant completă (livrezi perfect+asonanță), Whisper.
 
 - **Epic 8 — Intrare vocală (D31=A) — v1 LIVRAT (2026-06-03):**
-  - 8.1 ✅ Web Speech (`ro-RO`, `interimResults`/`continuous`, D34) → **fuzzy-snap pe bancă (D36)**
-    (Levenshtein insensibil la diacritice, prag ~34% → snap; sub prag → cuvântul brut via G2P) → cuvântul
-    rostit devine cuvântul central (D41), rimele ambientale îl urmează.
+  - 8.1 ✅ Web Speech (`ro-RO`, `interimResults`/`continuous`, D34) → **snap EXACT pe bancă (D36 revizuit)**
+    (potrivire cu/fără diacritice → forma curată; altfel cuvântul rostit rămâne, rimat prin G2P) → cuvântul
+    rostit devine cuvântul central (D41), rimele ambientale îl urmează. **`spokenWordPending`:** play manual
+    după ce mic-ul a luat un cuvânt ÎL ȚINE pe primul interval (nu sare imediat); `resumeAfterMic` reia
+    generatorul cu interval proaspăt dacă mergea înainte; `'aborted'` tratat ca stop normal.
   - 8.2 ✅ push-to-talk pe **`Space`**: **tap = play/pauză, ținut (>250ms) = vorbește** (disambiguare
     tap/hold, ca să nu strice play-ul pe Space). (Fn/Win+H NU se pot capta în browser — taste hardware/OS;
     de aceea Space, nu Fn.) + buton 🎤 toggle; feature-detect `isSecureContext` + Web Speech (D32) →
