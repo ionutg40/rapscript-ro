@@ -27,7 +27,7 @@
           <button class="level-segment" type="button" data-level="avansat">avansat</button>
           <button class="level-segment" type="button" data-level="profesionist">profesionist</button>
         </span>
-        <button id="btn-mic" class="btn btn-icon" type="button" aria-pressed="false" aria-label="vorbește (ține apăsat Space)" title="ține apăsat Space (sau acest buton) și spune un cuvânt · tap Space = play/pauză" hidden>🎤</button>
+        <button id="btn-mic" class="btn btn-icon" type="button" aria-pressed="false" aria-label="vorbește (ține apăsat M)" title="ține apăsat M (sau acest buton) și spune un cuvânt · Space = play/pauză" hidden>🎤</button>
         <button id="btn-fullscreen" class="btn btn-icon" type="button" aria-label="ecran complet" title="ecran complet">⛶</button>
       </div>
       <button id="open-viewer" class="link-btn" type="button">vezi cuvintele</button>
@@ -58,6 +58,7 @@
   <!-- banca + index de rime prin <script> (NU fetch — CORS pe file://, D2), ÎNAINTE de app.js -->
   <script src="words.js"></script>
   <script src="rhymes.js"></script>
+  <script src="rhyme_rolex.js"></script><!-- index RoLEX (rime la orice cuvânt, grade 1-3 + fallback) -->
   <script src="app.js"></script>
 </body>
 </html>

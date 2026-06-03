@@ -227,29 +227,32 @@ function handleKeydown(e) {
   if (e.key === 'Escape' && drawerEl && !drawerEl.hidden) closeViewer();
 }
 
-// Space: tap scurt = play/pause; ținut apăsat = vorbește (push-to-talk, dacă mic-ul e disponibil)
-const PTT_HOLD_MS = 250;
-let pttTimer = null, pttTalking = false;
+// Space = DOAR play/pauză. Microfonul a fost mutat pe M (push-to-talk) ca Space-ul de play
+// să nu se mai bată cap în cap cu vorbitul (înainte: ținut Space → pauză involuntară).
 function handleSpaceDown(e) {
   if (e.code !== 'Space' || e.repeat) return;
   const t = e.target.tagName;
   if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return; // lasă butonul/inputul focalizat
   e.preventDefault(); // fără scroll
-  if (speechSupported()) {
-    pttTalking = false;
-    pttTimer = setTimeout(function () { pttTalking = true; startListening(); }, PTT_HOLD_MS);
-  }
 }
 function handleSpaceUp(e) {
   if (e.code !== 'Space') return;
   const t = e.target.tagName;
   if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return;
-  if (speechSupported()) {
-    clearTimeout(pttTimer);
-    if (pttTalking) { pttTalking = false; stopListening(); return; } // a fost ținut → oprește vorbirea
-    if (state.listening) return; // mic pornit din buton → tap Space nu mai toggle-uiește play (P2)
-  }
-  handlePlayClick(); // tap scurt (sau mic indisponibil) → play/pause
+  handlePlayClick(); // tap Space = play/pauză
+}
+// M = push-to-talk: ții apăsat M și spui un cuvânt; eliberezi → stop. Pur hold (fără ambiguitate tap/hold).
+function handleMicKeyDown(e) {
+  if (e.code !== 'KeyM' || e.repeat) return;
+  const t = e.target.tagName;
+  if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return; // nu fura M-ul din input
+  if (speechSupported()) { e.preventDefault(); startListening(); }
+}
+function handleMicKeyUp(e) {
+  if (e.code !== 'KeyM') return;
+  const t = e.target.tagName;
+  if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return;
+  if (speechSupported() && state.listening) stopListening();
 }
 
 // ---- Epic 6: Viewer + Shared Add (prin Cloudflare Worker — tokenul NU e în browser) ----
@@ -399,6 +402,7 @@ function rhymeKeysFor(word) {
   const tail = toks.slice(s);
   return {
     p: tail.map((t) => t[0]).join('.'),                     // perfect: toate fonemele de la accent
+    c: tail.filter((t, k) => k === 0 || !t[1]).map((t) => t[0]).join('.'), // consonantic (grad 2): vocala accentuată + consoanele de după
     a: tail.filter((t) => t[1]).map((t) => t[0]).join('.'), // asonanță: doar vocalele
   };
 }
@@ -411,11 +415,16 @@ function rhymesFor(raw) {
   if (typeof RHYME_INDEX === 'undefined') return { empty: false, perfect: [], near: [], extra: [] };
   const keys = (typeof RHYME_KEYS !== 'undefined' && RHYME_KEYS[norm]) ? RHYME_KEYS[norm] : rhymeKeysFor(norm);
   if (!keys) return { empty: false, perfect: [], near: [], extra: [] };
-  const perfect = (RHYME_INDEX.perfect[keys.p] || []).filter((w) => w !== norm);
-  const seen = new Set(perfect);
-  const near = (RHYME_INDEX.asonanta[keys.a] || []).filter((w) => w !== norm && !seen.has(w));
-  near.forEach((w) => seen.add(w));
-  const extra = (typeof RHYME_EXTRA !== 'undefined' && RHYME_EXTRA[norm] ? RHYME_EXTRA[norm] : []).filter((w) => !seen.has(w));
+  const RL = (typeof RHYME_ROLEX !== 'undefined') ? RHYME_ROLEX : null;
+  const seen = new Set([norm]);
+  const take = (arr) => (arr || []).filter((w) => !seen.has(w) && (seen.add(w), true)); // dedup + ordine
+  // Grade de rimă, umplute în ordine până la afișaj (caller taie la 5). Banca (curată) întâi, RoLEX umple golul.
+  const perfect = take(RHYME_INDEX.perfect[keys.p])                 // grad 1: perfect din bancă
+    .concat(RL ? take(RL.perfect[keys.p]) : []);                    // grad 2: perfect din RoLEX (orice cuvânt)
+  const near = (RL && keys.c ? take(RL.cons[keys.c]) : [])          // grad 3: consonantic RoLEX
+    .concat(take(RHYME_INDEX.asonanta[keys.a]))                     // grad 4: asonanță din bancă
+    .concat(RL ? take(RL.asonanta[keys.a]) : []);                   // grad 5: asonanță RoLEX
+  const extra = take((typeof RHYME_EXTRA !== 'undefined' && RHYME_EXTRA[norm]) ? RHYME_EXTRA[norm] : []);
   return { empty: false, perfect: perfect, near: near, extra: extra };
 }
 
@@ -548,10 +557,12 @@ function boot() {
   speedSlider.addEventListener('change', handleSpeedChange);
   levelSegmentsEl.addEventListener('click', handleLevelClick); // delegation
   document.addEventListener('keydown', handleKeydown);
-  document.addEventListener('keydown', handleSpaceDown); // Space: tap=play, ținut=vorbește
+  document.addEventListener('keydown', handleSpaceDown); // Space = play/pauză
   document.addEventListener('keyup', handleSpaceUp);
-  // P3: dacă pierzi focusul cât ții Space (schimbi tab/fereastră), keyup nu mai vine → mic blocat ON.
-  function abortPtt() { clearTimeout(pttTimer); if (pttTalking) pttTalking = false; if (state.listening) stopListening(); }
+  document.addEventListener('keydown', handleMicKeyDown); // M = push-to-talk (ținut)
+  document.addEventListener('keyup', handleMicKeyUp);
+  // P3: dacă pierzi focusul cât ții M (schimbi tab/fereastră), keyup nu mai vine → mic blocat ON.
+  function abortPtt() { if (state.listening) stopListening(); }
   window.addEventListener('blur', abortPtt);
   document.addEventListener('visibilitychange', function () { if (document.hidden) abortPtt(); });
 
@@ -586,12 +597,12 @@ function boot() {
   }
 
   // Epic 8: microfon (D31=A Web Speech) — DOAR pe context securizat + suportat (D32); altfel ascuns
-  // push-to-talk e pe Space (vezi handleSpaceDown/Up); aici doar butonul + feature-detect (D32)
+  // push-to-talk e pe M (vezi handleMicKeyDown/Up); aici doar butonul + feature-detect (D32)
   micBtn = byId('btn-mic');
   if (micBtn && speechSupported()) {
     micBtn.hidden = false;
     micBtn.addEventListener('click', toggleListening);
-    console.log('microfon: Web Speech ro-RO (ține Space sau 🎤; tap Space = play/pauză)');
+    console.log('microfon: Web Speech ro-RO (ține M sau 🎤; Space = play/pauză)');
   } else if (micBtn) {
     micBtn.hidden = true; // file:// / Firefox / iOS-Chrome → fără buton mort (D32)
     console.log('microfon indisponibil (context ne-securizat sau browser nesuportat) — ascuns.');
@@ -632,6 +643,11 @@ function runTests() {
     ok('rimă: lumină → conține albină', rhymesFor('lumină').perfect.includes('albină'));
     ok('rimă: cuvânt necunoscut nu crapă', rhymesFor('zzqxw').perfect.length === 0);
     ok('rimă: gol → empty', rhymesFor('').empty === true);
+    // RoLEX fallback (D43): cuvinte din afara băncii primesc rime instant (grade 1-3)
+    if (typeof RHYME_ROLEX !== 'undefined') {
+      const gunoi = rhymesFor('gunoi'); ok('rimă RoLEX: gunoi ≥5', gunoi.perfect.concat(gunoi.near).length >= 5);
+      const cola = rhymesFor('cola'); ok('rimă RoLEX: cola ≥5', cola.perfect.concat(cola.near).length >= 5);
+    }
   }
   // Epic 8: fuzzy-snap (D36)
   ok('levenshtein', levenshtein('sceptru', 'sceptrx') === 1 && levenshtein('abc', 'abc') === 0);

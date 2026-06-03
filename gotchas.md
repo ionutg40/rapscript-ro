@@ -116,3 +116,15 @@ confort (mai rău decât niciun gate, fiindcă te bazezi pe el). Hash-uiește ex
 v2 a mers direct live. CR a găsit 9 patch-uri (inclusiv un leak de microfon care rămâne ON și un gap
 GDPR pe disclosure) pe cod deja la utilizatori. Quick-dev e ok pentru viteză, dar la features care
 ating privacy (microfon) sau CI, fă măcar un review pass înainte de deploy, nu după.
+
+### 18. rimeaza.ro NU se scrapează (blocat explicit) → reprodu comportamentul din RoLEX
+Cererea „scrape rimeaza.ro, îmi plac rimele lor". Verificat înainte: `robots.txt` are `Disallow: /` pt
+ClaudeBot + toți boții AI, semnal `ai-train=no`, iar pagina de cuvânt dă 403 la acces automat. Plus
+copyright (datele lor, livrate într-un tool public). Decizie: NU scrapăm. Ce-ți place nu e site-ul, e
+COMPORTAMENTUL (rime pe grade + degradare). Reprodus legitim din RoLEX (date deschise, build-time):
+`rhyme_rolex.js` = index `cheie→[cuvinte comune]` (perfect/cons/asonanță, zipf≥3.0, cap 12/cheie =
+144KB/47KB gzip). Motorul umple grade 1→5 (bank-perfect → RoLEX-perfect → RoLEX-cons → bank-ason →
+RoLEX-ason) până la 5. Rezultat: rime instant la ORICE cuvânt (gunoi/cola/ghiveci), offline, pe file://.
+Cheie nouă `c` (consonantic) oglindită Python `cons_key` ↔ JS `rhymeKeysFor(.c)`. `rhyme_rolex.js` se
+generează DOAR cu `--from-rolex` (CI n-are RoLEX) → comis ca input, ca stress.json. Regulă generală:
+când un site interzice scraping (robots/ai-train/403), nu-l ocoli — livrează rezultatul din date deschise.

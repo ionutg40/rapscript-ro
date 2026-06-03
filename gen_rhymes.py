@@ -16,6 +16,7 @@ Gotcha-uri RO acoperite (D28): â/î→ɨ · ce/ci→/tʃ/ · ge/gi→/dʒ/ · c
 """
 import json
 import hashlib
+import re
 import sys
 from pathlib import Path
 
@@ -24,7 +25,10 @@ SRC = ROOT / "assets" / "wordbank.json"
 STRESS_SRC = ROOT / "assets" / "stress.json"   # opțional: {cuvânt: k} (k=nucleu de la final, 0=ultim)
 EXTRA_SRC = ROOT / "assets" / "rhyme_extra.json"  # opțional: {cuvânt: [rime externe]} pt cuvinte sub-deservite (RoLEX)
 OUT = ROOT / "rhymes.js"
+ROLEX_JS_OUT = ROOT / "rhyme_rolex.js"  # index runtime cheie→cuvinte din RoLEX; comis ca input (CI n-are RoLEX)
 MIN_HINT = 5  # câte sugestii vrem la afișaj (D41); sub atât → backfill din RoLEX
+ROLEX_ZIPF_MIN = 3.0  # prag frecvență (zipf) pt indexul runtime — cuvinte comune, nu rarități
+ROLEX_CAP = 12        # max cuvinte per cheie de rimă în indexul runtime (cele mai frecvente întâi)
 LEVELS = ("incepator", "avansat", "profesionist")
 
 # litere-vocală (ortografic) → simbol fonetic (â și î colapsează în /ɨ/ = '1')
@@ -99,6 +103,58 @@ def rhyme_keys(word, override=None):
     perfect = ".".join(sym for sym, _ in tail)          # toate fonemele de la accent
     ason = ".".join(sym for sym, isv in tail if isv)    # doar vocalele de la accent
     return perfect, ason, len(nuclei_idx(toks))
+
+
+def cons_key(word, override=None):
+    """Cheie consonantică (grad 2): vocala accentuată + consoanele de după (ignoră vocalele
+    neaccentuate de la final). Oglindă JS: rhymeKeysFor(.c). None dacă fără vocală.
+    Ex: lumină → 'i.n' (rimează latina/vitrina); ghiveci → 'e.tS' (= perfect, oxiton)."""
+    toks = g2p(word)
+    s = stressed_nucleus(toks, override)
+    if s is None:
+        return None
+    tail = toks[s:]
+    return ".".join(sym for k, (sym, isv) in enumerate(tail) if k == 0 or not isv)
+
+
+def build_rolex_index(forms, zipf):
+    """Index runtime {perfect,cons,asonanta}: cheie_rimă → [cuvinte comune] din RoLEX, pt rime instant
+    la ORICE cuvânt tastat/rostit din afara băncii (grade 1-3 + fallback, D43). Chei = euristică
+    (override None) ca să se potrivească cu calea JS pt cuvinte necunoscute. Filtru frecvență (zipf) +
+    cap pe cheie → fișier mic. Comis ca input (CI n-are RoLEX — ca stress.json/rhyme_extra.json)."""
+    if zipf is None:
+        raise SystemExit("EROARE: indexul RoLEX runtime cere wordfreq (rang frecvență). venv: ~/.venvs/rapscript")
+    word_re = re.compile(r"^[a-zăâîșț]+$")
+    zc, uniq, seen = {}, [], set()
+    for form, *_ in forms:
+        if form in seen or len(form) < 2 or not word_re.match(form):
+            continue
+        z = zipf(form, "ro")
+        if z < ROLEX_ZIPF_MIN:
+            continue
+        seen.add(form); zc[form] = z; uniq.append(form)
+    perfect, cons, ason = {}, {}, {}
+    for w in uniq:
+        rk = rhyme_keys(w, None)
+        if not rk:
+            continue
+        p, a, _ = rk
+        c = cons_key(w, None)
+        perfect.setdefault(p, []).append(w)
+        if c:
+            cons.setdefault(c, []).append(w)
+        ason.setdefault(a, []).append(w)
+    for idx in (perfect, cons, ason):
+        for k in list(idx):
+            idx[k] = sorted(set(idx[k]), key=lambda x: -zc[x])[:ROLEX_CAP]
+    body = json.dumps({"perfect": perfect, "cons": cons, "asonanta": ason},
+                      ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    js = ("// AUTO-GENERAT din RoLEX (python gen_rhymes.py --from-rolex) — NU EDITA. Comis ca input (CI n-are RoLEX).\n"
+          "// RHYME_ROLEX: {perfect,cons,asonanta} cheie→[cuvinte comune]. Fallback runtime pt rime la ORICE cuvânt.\n"
+          f"const RHYME_ROLEX = {body};\n")
+    ROLEX_JS_OUT.write_text(js, encoding="utf-8")
+    print(f"OK: rhyme_rolex.js — {len(uniq)} cuvinte · perfect {len(perfect)} · cons {len(cons)} · ason {len(ason)} "
+          f"(zipf≥{ROLEX_ZIPF_MIN}, cap {ROLEX_CAP}).")
 
 
 def load_levels():
@@ -331,6 +387,8 @@ def main():
         EXTRA_SRC.write_text(json.dumps(extra, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(f"OK: rhyme_extra.json — {len(extra)} cuvinte sub-deservite primesc rime din RoLEX "
               f"(ex. sceptru: {', '.join(extra.get('sceptru', [])[:4]) or '—'}).")
+        # 3) index RoLEX runtime (grade 1-3 + fallback) pt rime instant la ORICE cuvânt din afara băncii
+        build_rolex_index(forms, zipf)
         # cade spre regenerarea normală (folosește noile stress.json + rhyme_extra.json)
 
     stress = load_stress()
