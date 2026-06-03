@@ -23,7 +23,7 @@ date: '2026-06-03'
 _Addendum la `docs/architecture.md`. Continuă numerotarea deciziilor de la **D26** și FR-urile de la
 **FR-11**. v1 (FR1-10, D1-D25) e LIVRAT. **Doc de DECIZII**; baza de dovezi (research + verificare
 adversarială pe 52 agenți) trăiește în `docs/research-voice-rhyme-2026-06-02.md` — citește-l pentru
-„de ce", aici e „ce facem". Status: **DRAFT** — o decizie majoră (D31) e deschisă pentru owner._
+„de ce", aici e „ce facem". Status: **D31 DECIS** (2026-06-03) = A (Web Speech `ro-RO`); Epic 8 v1 LIVRAT._
 
 > **Sursă unică de adevăr (canonic 2026-06-03):** acest fișier a fost reconciliat dintr-un addendum
 > scris manual + un addendum scris autonom de workflow-ul `rapscript-voice-rhyme-research`. Diferențele
@@ -100,7 +100,7 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
 
 ### Decision Priority Analysis
 
-- **Critical (blochează implementarea):** D26, D27, D28, D36, D41, D31 (DESCHISĂ).
+- **Critical (blochează implementarea):** D26, D27, D28, D36, D41, D31 (DECIS=A).
 - **Important (modelează arhitectura):** D29, D30, D32, D33, D34, D37, D38, D39, D40.
 - **Conditional (doar pe path C, escaladat prin D40):** D35.
 - **Deferred (post-v2):** auto-detect limbă (Whisper), mod offline Whisper-WASM opt-in, cascadă slant completă.
@@ -172,7 +172,7 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
 
 ### Voice Input (jumătatea riscantă)
 
-- **D31 ▲ — [DECIZIE DESCHISĂ — OWNER] Calea de recunoaștere vocală.** Sparge două NFR-uri sacre.
+- **D31 ▲ — [DECIS 2026-06-03 = A] Calea de recunoaștere vocală.** Sparge două NFR-uri sacre.
   Patru căi, mutual exclusive ca PRIMAR:
 
   | Opțiune | file:// | Privacy | Latență primul cuvânt | Backend | Browser | Verdict |
@@ -302,7 +302,7 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
 
 ## Open Questions
 
-- **OQ-V1 (BLOCANT pt voce):** D31 — care cale primară? Recomandare: A (Web Speech `ro-RO`) +
+- **OQ-V1 (REZOLVAT 2026-06-03):** D31 = A (Web Speech `ro-RO`). Epic 8 v1 livrat. Recomandarea inițială era A +
   fallback D38 (Groq via Worker); B amânat; C dacă A e insuficient; D eliminat. (owner: „nu știu încă").
 - **OQ-V2 ✅ mitigat (2026-06-03):** RoLEX folosit STRICT build-time, local (`/tmp`), **NU comis**. Livrăm
   doar `assets/stress.json` (71 poziții de accent derivate) + `rhymes.js` (chei+liste) — date derivate,

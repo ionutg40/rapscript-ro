@@ -247,6 +247,7 @@ function handleSpaceUp(e) {
   if (speechSupported()) {
     clearTimeout(pttTimer);
     if (pttTalking) { pttTalking = false; stopListening(); return; } // a fost ținut → oprește vorbirea
+    if (state.listening) return; // mic pornit din buton → tap Space nu mai toggle-uiește play (P2)
   }
   handlePlayClick(); // tap scurt (sau mic indisponibil) → play/pause
 }
@@ -475,6 +476,7 @@ function getRecognition() {
     if (w) { state.word = w; state.micMsg = '🎤 „' + w + '"'; render(); } // → cuvânt central → rime ambientale (D41)
   };
   recognition.onerror = function (e) {
+    if (e.error === 'aborted') { state.listening = false; render(); return; } // stop normal (.stop()/tab switch) → nu e eroare (P4)
     const map = {
       'not-allowed': 'acces microfon refuzat', 'service-not-allowed': 'microfon indisponibil',
       'no-speech': 'n-am auzit nimic — reîncearcă', 'audio-capture': 'fără microfon', 'network': 'eroare de rețea',
@@ -489,7 +491,7 @@ function startListening() {
   if (state.playing) { state.playing = false; restartTimer(); } // oprește generatorul auto (cuvântul rostit rămâne)
   try {
     getRecognition().start();
-    state.listening = true; state.micMsg = '🎤 ascult… (audio → Google)'; render(); // disclosure privacy (D39)
+    state.listening = true; state.micMsg = '🎤 ascult… (audio → Google; nimic nu se stochează)'; render(); // disclosure privacy (D39, P6)
   } catch (e) { /* deja pornit — ignoră */ }
 }
 function stopListening() {
@@ -548,6 +550,10 @@ function boot() {
   document.addEventListener('keydown', handleKeydown);
   document.addEventListener('keydown', handleSpaceDown); // Space: tap=play, ținut=vorbește
   document.addEventListener('keyup', handleSpaceUp);
+  // P3: dacă pierzi focusul cât ții Space (schimbi tab/fereastră), keyup nu mai vine → mic blocat ON.
+  function abortPtt() { clearTimeout(pttTimer); if (pttTalking) pttTalking = false; if (state.listening) stopListening(); }
+  window.addEventListener('blur', abortPtt);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) abortPtt(); });
 
   // Fullscreen (FR8): feature-detect — ascunde butonul dacă API-ul lipsește (iPhone), nu buton mort
   if (document.documentElement.requestFullscreen) {

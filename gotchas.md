@@ -79,3 +79,40 @@ static e public (View Source) → furat + GitHub îl revocă. Soluția = un back
 (Cloudflare Worker: token ca Secret, setat o dată; browserul cheamă Worker-ul). Costul: endpoint public
 → anti-bot (Turnstile) + rate-limit + token scoped + validare în Worker ȘI în CI. Pentru 2 useri,
 direct-commit cu Turnstile e ok; la abuz real, treci pe batch (KV+cron), nu commit-per-call.
+
+---
+
+## Retrospective v2 (Epic 7 rime + Epic 8 voce) — 2026-06-03
+
+> Construit quick-dev (commit-uri directe, fără sprint cycle, fără review înainte de deploy).
+> CR post-factum a găsit 9 patch + 9 defer pe cod DEJA live. Lecțiile de proces:
+
+### 12. Gate-ul pe care-l scrii trebuie să BLOCHEZE, nu să fie opțional
+D36 zicea „vocea nu se lansează până la test live pe 20+ cuvinte". Codul a fost deployat cu mențiunea
+proprie „verificat doar logica prin simulare onresult". Un gate pe care-l scrii și apoi îl sari nu e
+gate, e o notă. Dacă e condiție de ship, fă-o blocantă (checklist înainte de merge, nu după).
+
+### 13. Când închizi o întrebare deschisă, actualizează TOATE referințele
+D31 a fost marcat „✅ DECIS" în header dar OQ-V1 a rămas „BLOCANT (owner: nu știu încă)" în registrul
+de open questions, în ACELAȘI doc. Sursă unică de adevăr: când o decizie se ia, grep după ID-ul ei și
+actualizează fiecare loc, altfel doc-ul se autocontrazice și nu mai știi ce e decis.
+
+### 14. Claim în doc = ce GARANTEAZĂ codul, nu ce speri. Paritate ≠ corectitudine
+D28 zicea „accent → eroare 0%". Realitatea: 71/417 overrides din RoLEX, 102 cuvinte cad pe heuristică
+(neverificate), `copíi/cópii` încă greșit. Ce s-a obținut e paritate JS↔Python, nu accent corect.
+Distinge mereu „cele două implementări dau același rezultat" de „rezultatul e corect".
+
+### 15. Invariant afirmat = invariant PĂZIT în cod
+„Zero orfane (toate au rime)" e afirmat, dar `true_orphans` doar printează (față de `no_vowel` care
+face `SystemExit`). Un invariant fără guard fail-loud e un snapshot care putrezește la primul cuvânt
+nou. Dacă scrii „garantat X", pune codul să cadă tare când X nu mai e adevărat.
+
+### 16. Freshness gate trebuie să hash-uiască TOATE inputurile lui
+`canonical_hash` include `extra` (nefiltrat) dar NU `stress.json` deloc → editări de accent nu sunt
+prinse de CI, deși comentariul promite că sunt. Un gate de freshness care ratează un input dă fals
+confort (mai rău decât niciun gate, fiindcă te bazezi pe el). Hash-uiește exact ce intră în output.
+
+### 17. Quick-dev fără pas de review = cod live nereviziuit
+v2 a mers direct live. CR a găsit 9 patch-uri (inclusiv un leak de microfon care rămâne ON și un gap
+GDPR pe disclosure) pe cod deja la utilizatori. Quick-dev e ok pentru viteză, dar la features care
+ating privacy (microfon) sau CI, fă măcar un review pass înainte de deploy, nu după.
