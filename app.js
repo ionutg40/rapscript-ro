@@ -176,7 +176,7 @@ function handleTick() {
 
 function handlePlayClick() {
   if (!state.ready) return;
-  if (state.listening) stopListening(); // play repornește generatorul → oprește mic-ul
+  if (state.listening) { micWasPlaying = false; stopListening(); } // play manual → oprește mic-ul, fără resume auto dublu
   state.playing = !state.playing;
   if (state.playing) { state.micMsg = ''; state.word = pickWord(bankFor(state.level), state.word); } // cuvânt nou la play (t=0)
   restartTimer();
@@ -468,6 +468,17 @@ function snapToBank(raw) {
 }
 
 let recognition = null;
+let micWasPlaying = false; // generatorul mergea când a pornit mic-ul? → resume automat după ce ia cuvântul
+// Repornește generatorul după ce mic-ul a luat cuvântul (dacă mergea înainte). Interval PROASPĂT:
+// cuvântul rostit stă tot intervalul stabilit înainte ca generatorul să-l schimbe cu unul din bancă.
+function resumeAfterMic() {
+  if (!micWasPlaying) return;
+  micWasPlaying = false;
+  state.playing = true;
+  restartTimer();        // setInterval nou → primul tick abia după intervalMs (cuvântul rostit nu sare)
+  retriggerTimerBar();   // bara repornește de la 0 pe cuvântul rostit
+  render();
+}
 function speechSupported() {
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition) && window.isSecureContext;
 }
@@ -477,7 +488,7 @@ function getRecognition() {
   recognition = new SR();
   recognition.lang = 'ro-RO';
   recognition.interimResults = true; // afișează cuvântul cum îl spui (D34)
-  recognition.continuous = true;
+  recognition.continuous = false;    // o rostire → se termină singur (onend) → resume prompt al generatorului (P7)
   recognition.onresult = function (e) {
     let txt = '';
     for (let i = e.resultIndex; i < e.results.length; i++) txt = e.results[i][0].transcript;
@@ -485,19 +496,20 @@ function getRecognition() {
     if (w) { state.word = w; state.micMsg = '🎤 „' + w + '"'; render(); } // → cuvânt central → rime ambientale (D41)
   };
   recognition.onerror = function (e) {
-    if (e.error === 'aborted') { state.listening = false; render(); return; } // stop normal (.stop()/tab switch) → nu e eroare (P4)
+    if (e.error === 'aborted') { state.listening = false; render(); resumeAfterMic(); return; } // stop normal (.stop()/tab switch) → nu e eroare (P4)
     const map = {
       'not-allowed': 'acces microfon refuzat', 'service-not-allowed': 'microfon indisponibil',
       'no-speech': 'n-am auzit nimic — reîncearcă', 'audio-capture': 'fără microfon', 'network': 'eroare de rețea',
     };
     state.listening = false; state.micMsg = '⚠ ' + (map[e.error] || ('microfon: ' + e.error)); render();
   };
-  recognition.onend = function () { state.listening = false; render(); };
+  recognition.onend = function () { state.listening = false; render(); resumeAfterMic(); }; // a luat cuvântul → resume auto
   return recognition;
 }
 function startListening() {
   if (!speechSupported() || state.listening) return;
-  if (state.playing) { state.playing = false; restartTimer(); } // oprește generatorul auto (cuvântul rostit rămâne)
+  micWasPlaying = state.playing; // ține minte: dacă mergea, facem resume automat după ce ia cuvântul
+  if (state.playing) { state.playing = false; restartTimer(); } // pauză cât asculți (cuvintele nu sar)
   try {
     getRecognition().start();
     state.listening = true; state.micMsg = '🎤 ascult… (audio → Google; nimic nu se stochează)'; render(); // disclosure privacy (D39, P6)
