@@ -27,6 +27,7 @@ LEVELS = ("incepator", "avansat", "profesionist")
 
 # litere-vocală (ortografic) → simbol fonetic (â și î colapsează în /ɨ/ = '1')
 VOWEL_MAP = {"a": "a", "ă": "@", "â": "1", "î": "1", "e": "e", "i": "i", "o": "o", "u": "u"}
+ORTHO_VOWELS = set("aăâeiouî")  # litere-vocală (pt numărat ordinea accentului din RoLEX)
 # consoane simple → simbol (acoperă comma-below ȘI cedilă, ca să nu pice pe variante de input)
 CONS_MAP = {
     "ș": "S", "ş": "S", "ț": "T", "ţ": "T", "j": "Z",
@@ -125,6 +126,54 @@ def load_stress():
     return {str(k): int(v) for k, v in raw.items()}
 
 
+def heuristic_from_end(toks):
+    """Indexul-de-la-final al nucleului pe care l-ar alege euristica (fără override)."""
+    nuc = nuclei_idx(toks)
+    s = stressed_nucleus(toks, None)
+    return (len(nuc) - 1) - nuc.index(s)
+
+
+def extract_rolex(path, bank_words):
+    """Din RoLEX (col1=formă, col5=formă-cu-accent), derivă override-uri de accent DOAR unde
+    euristica greșește. Accent = nucleul-de-la-final, în termenii nucleelor g2p (un singur alfabet).
+    RoLEX NU se comite (OQ-V2); ieșirea (stress.json, mic) e singurul artefact livrat."""
+    want = set(bank_words)
+    col5_of = {}
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 6:
+                continue
+            form = parts[0].strip().lower()
+            if form in want and form not in col5_of:
+                col5_of[form] = parts[4]
+    overrides, missing, skipped = {}, [], []
+    for w in sorted(bank_words):
+        col5 = col5_of.get(w)
+        if col5 is None:
+            missing.append(w)
+            continue
+        toks = g2p(w)
+        N = len(nuclei_idx(toks))
+        if N == 0:
+            continue
+        apos = col5.find("'")
+        if apos < 0:
+            rolex_fe = 0  # monosilabă / fără marcaj → ultima
+        else:
+            if col5.replace("'", "").lower() != w:  # aliniere nesigură → lasă euristica
+                skipped.append(w)
+                continue
+            ordinal = sum(1 for ch in w[:apos + 1] if ch in ORTHO_VOWELS)  # a câta vocală (de la start)
+            if ordinal < 1 or ordinal > N:
+                skipped.append(w)
+                continue
+            rolex_fe = N - ordinal
+        if rolex_fe != heuristic_from_end(toks):
+            overrides[w] = rolex_fe
+    return overrides, missing, skipped
+
+
 def build(bank, stress):
     """Construiește index invers + chei per cuvânt. Întoarce (index, keys, stats)."""
     all_words = sorted(w for ws in bank.values() for w in ws)
@@ -172,20 +221,39 @@ def read_existing_hash():
     return m.group(1) if m else None
 
 
-def render_js(index, keys, h):
+def render_js(index, keys, stress, h):
     idx_body = json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True)
     keys_body = json.dumps(keys, ensure_ascii=False, indent=2, sort_keys=True)
+    # doar override-urile pt cuvinte din bancă — JS le aplică identic (paritate g2p+accent)
+    stress_body = json.dumps({w: stress[w] for w in sorted(stress) if w in keys}, ensure_ascii=False, sort_keys=True)
     return (
         "// AUTO-GENERAT din wordbank.json (+ assets/stress.json) — NU EDITA (rulează: python gen_rhymes.py)\n"
         "// RHYME_INDEX: cheie_rimă → [cuvinte]. RHYME_KEYS: cuvânt → {p:perfect, a:asonanță, n:silabe}.\n"
+        "// RHYME_STRESS: cuvânt → nucleu accentuat (de la final) — override-uri de accent (RoLEX), pt paritate JS.\n"
         f"const RHYME_INDEX = {idx_body};\n\n"
         f"const RHYME_KEYS = {keys_body};\n\n"
+        f"const RHYME_STRESS = {stress_body};\n\n"
         f"const RHYME_META = {{ count: {len(keys)}, hash: \"{h}\" }};\n"
     )
 
 
 def main():
     bank = load_levels()
+
+    # --from-rolex PATH: derivă assets/stress.json din RoLEX (o dată / când crește banca).
+    # RoLEX NU se comite; doar stress.json (override-uri unde euristica greșește) e livrat.
+    if "--from-rolex" in sys.argv:
+        path = sys.argv[sys.argv.index("--from-rolex") + 1]
+        all_words = [w for ws in bank.values() for w in ws]
+        overrides, missing, skipped = extract_rolex(path, all_words)
+        STRESS_SRC.write_text(json.dumps(overrides, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"OK: stress.json — {len(overrides)} override-uri (euristica greșea) · "
+              f"{len(missing)} negăsite în RoLEX · {len(skipped)} sărite (aliniere).")
+        if overrides:
+            s = sorted(overrides)
+            print("   corectate:", ", ".join(s[:24]) + (" …" if len(s) > 24 else ""))
+        # cade spre regenerarea normală (care folosește noul stress.json)
+
     stress = load_stress()
     index, keys, stats = build(bank, stress)
     h = canonical_hash(index, keys)
@@ -206,7 +274,7 @@ def main():
         print(f"CHECK OK: rhymes.js e fresh ({stats['count']} cuvinte, hash {h[:12]}…).")
         return
 
-    OUT.write_text(render_js(index, keys, h), encoding="utf-8")
+    OUT.write_text(render_js(index, keys, stress, h), encoding="utf-8")
     print(f"OK: rhymes.js scris — {stats['count']} cuvinte · "
           f"{stats['perfect_groups']} grupuri perfecte · "
           f"{stats['heuristic_stress']} accente heuristice · hash {h[:12]}…")

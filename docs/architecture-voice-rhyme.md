@@ -125,10 +125,12 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   față de prima propunere** (ultimele N litere — rima e fenomen sonor, nu ortografic). Detalii:
   - **Surse pronunție (build-time, în `gen_rhymes.py`):** RoLEX (330k, +accent +IPA) → ipa-dict/MaRePhoR
     → espeak-ng/phonemizer ca fallback OOV (slang/neologisme).
-  - **`stress.json` NOU (input adnotat o-dată):** verdictul „româna e destul de fonetică fără dicționar"
-    e **PARTIAL** — pică pe omografe de accent (`copíi` vs `cópii`), `-i` final, neologisme. Pentru banca
-    închisă de 417, adnotarea accentului o-dată (cross-check vs RoLEX) duce eroarea la **0%**. Heuristica
-    penultimă-silabă rămâne doar fallback pt OOV la runtime.
+  - **`stress.json` (din RoLEX) — LIVRAT 2026-06-03:** `gen_rhymes.py --from-rolex` derivă
+    `assets/stress.json` = **71 override-uri** (din 417) unde euristica greșea accentul (taină→`a`,
+    cafea/verbe oxitone `-a`, doctor, pasăre…). 93 negăsite în RoLEX + 9 sărite → rămân pe euristică
+    (penultim/ultim). RoLEX (24MB) **NU se comite** (OQ-V2); doar `stress.json` (mic) e livrat. JS aplică
+    override-urile prin `RHYME_STRESS` emis în `rhymes.js` → **paritate 417/417 menținută**. _(Reziduu:
+    omografe de accent `copíi`/`cópii` — RoLEX dă prima formă; refinare viitoare.)_
   - **Normalizări în build:** `â/î → ɨ`; `ce/ci → /tʃ/`, `ge/gi → /dʒ/`, `che/ghe → /k,g/`; `-i` final
     palatalizat (`lupi` /lupʲ/) ca marcaj, nu vocală.
 
@@ -288,9 +290,10 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
 
 - **OQ-V1 (BLOCANT pt voce):** D31 — care cale primară? Recomandare: A (Web Speech `ro-RO`) +
   fallback D38 (Groq via Worker); B amânat; C dacă A e insuficient; D eliminat. (owner: „nu știu încă").
-- **OQ-V2:** licența RoLEX (fără LICENSE explicit) — de confirmat cu autorul înainte de pivot comercial.
-  Mitigare: build-time only; livrăm doar `rhymes.js` derivat (chei + liste), NU dump-ul RoLEX;
-  reguli espeak-ng (GPL) reimplementate ca ~25 reguli JS. ipa-dict/MaRePhoR = CC BY-NC (ok la învățare).
+- **OQ-V2 ✅ mitigat (2026-06-03):** RoLEX folosit STRICT build-time, local (`/tmp`), **NU comis**. Livrăm
+  doar `assets/stress.json` (71 poziții de accent derivate) + `rhymes.js` (chei+liste) — date derivate,
+  nu dump-ul RoLEX. Risc licență minim (fapte de pronunție pt 417 cuvinte). De reconfirmat doar la pivot
+  comercial. (G2P-ul e reguli proprii în Python/JS, nu espeak/RoLEX.)
 - **OQ-V3:** rime doar din banca proprie (417, curate dar puține per cuvânt) vs dicționar mare (RoLEX
   330k, volum dar ne-curat)? Recomandare: **hibrid** — banca proprie prima, backfill dintr-o felie RoLEX
   filtrată pe frecvență.
@@ -306,7 +309,8 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
 - **Epic 7 — Motor de rimă (NEBLOCAT, începe ACUM):** aditiv-pur, zero regresie NFR v1, valoros
   independent prin tastare pe orice browser incl. `file://`.
   - 7.1 `gen_rhymes.py`: RoLEX + `stress.json` → cheie fonetică (D28) → `rhymes.js` + `--check` + fail-loud (D29).
-  - 7.2 încărcare `rhymes.js` + guard + CI freshness gate (oglindă la 2.2/2.3).
+  - 7.2 **LIVRAT**: `rhymes.js` inclus + guard; CI (`check.yml`) **regenerează** rhymes.js la fiecare
+    push (oglindă la words.js) → cuvinte adăugate prin UI primesc rime automat.
   - 7.3 UI rimă: rime ambientale sus, gri-umbră, pt cuvântul curent (D41), prin `render()` (D7). Tokeni
     Nocturn, reduced-motion. (Drawer de tastare SCOS la cererea owner-ului — UI curat.) **STARE: LIVRAT +
     DEPLOYAT** (G2P JS oglindă a Python, paritate 417/417 în `?test=1`, 11/11 teste).

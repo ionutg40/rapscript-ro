@@ -1,8 +1,9 @@
 name: word-bank
 
-# La orice push pe main: regenerează words.js din wordbank.json (gen_words.py validează),
-# și commit-uiește words.js dacă s-a schimbat. Asta e "backend"-ul: UI comite wordbank.json
-# (GitHub API) → CI regenerează words.js → Pages redeployează → toți văd cuvântul nou (D21).
+# La orice push pe main: regenerează words.js + rhymes.js din wordbank.json (gen_*.py validează),
+# și le commit-uiește dacă s-au schimbat. Asta e "backend"-ul: UI comite wordbank.json
+# (GitHub API) → CI regenerează words.js + rhymes.js → Pages redeployează → toți văd cuvântul
+# nou ȘI rimele lui (D21 + D27).
 on:
   push:
     branches: [main]
@@ -22,14 +23,16 @@ jobs:
           python-version: '3.x'
       - name: Regenerează words.js (gen_words.py validează — date proaste = CI roșu)
         run: python gen_words.py
-      - name: Commit words.js dacă s-a schimbat
+      - name: Regenerează rhymes.js (gen_rhymes.py validează — date proaste = CI roșu)
+        run: python gen_rhymes.py
+      - name: Commit words.js / rhymes.js dacă s-au schimbat
         run: |
-          if ! git diff --quiet words.js; then
+          if ! git diff --quiet words.js rhymes.js; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add words.js
-            git commit -m "CI: regenerează words.js [auto]"
+            git add words.js rhymes.js
+            git commit -m "CI: regenerează words.js + rhymes.js [auto]"
             git push
           else
-            echo "words.js e fresh — nimic de comis."
+            echo "words.js + rhymes.js fresh — nimic de comis."
           fi

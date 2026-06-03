@@ -1,5 +1,6 @@
 // AUTO-GENERAT din wordbank.json (+ assets/stress.json) — NU EDITA (rulează: python gen_rhymes.py)
 // RHYME_INDEX: cheie_rimă → [cuvinte]. RHYME_KEYS: cuvânt → {p:perfect, a:asonanță, n:silabe}.
+// RHYME_STRESS: cuvânt → nucleu accentuat (de la final) — override-uri de accent (RoLEX), pt paritate JS.
 const RHYME_INDEX = {
   "asonanta": {
     "1": [
@@ -16,37 +17,36 @@ const RHYME_INDEX = {
       "brânză",
       "mână"
     ],
-    "1.a": [
-      "cânta",
-      "mânca"
-    ],
     "1.e": [
       "plânge",
       "râde",
       "înfrânge"
     ],
-    "1.u": [
-      "râu"
+    "1.i.e": [
+      "câine",
+      "lămâie",
+      "pâine"
     ],
     "@": [
       "adevăr",
       "măr",
       "păr",
-      "sări",
-      "zahăr"
+      "sări"
     ],
-    "@.@": [
-      "flacără"
+    "@.i.u.i": [
+      "dăinui"
     ],
-    "@.a": [
-      "destrăma"
-    ],
-    "@.e": [
-      "pasăre"
+    "@.u.i": [
+      "dezlănțui",
+      "dezvălui"
     ],
     "a": [
+      "alerga",
+      "asculta",
       "bani",
+      "bea",
       "băiat",
+      "cafea",
       "cal",
       "cald",
       "cap",
@@ -54,19 +54,27 @@ const RHYME_INDEX = {
       "copac",
       "corolar",
       "curaj",
+      "cânta",
+      "dansa",
+      "destrăma",
       "extaz",
       "geam",
       "hotar",
       "infinitezimal",
       "lanț",
       "monumental",
+      "mânca",
       "nas",
       "neînduplecat",
       "neînfricat",
       "oraș",
       "pat",
       "postulat",
+      "preschimba",
       "sat",
+      "spulbera",
+      "stea",
+      "subjuga",
       "talisman",
       "temerar",
       "viclean",
@@ -96,11 +104,15 @@ const RHYME_INDEX = {
       "vacă",
       "varză",
       "vrajă",
+      "zahăr",
       "zăpadă",
       "îndoială"
     ],
-    "a.a": [
-      "dansa"
+    "a.@.@": [
+      "flacără"
+    ],
+    "a.@.e": [
+      "pasăre"
     ],
     "a.e": [
       "accidentalitate",
@@ -177,7 +189,29 @@ const RHYME_INDEX = {
       "șarpe"
     ],
     "a.i": [
-      "ceai"
+      "imuabil",
+      "indescifrabil",
+      "inefabil",
+      "irevocabil",
+      "perisabil"
+    ],
+    "a.i.@": [
+      "graniță",
+      "taină"
+    ],
+    "a.i.e": [
+      "demonstrație",
+      "fundație",
+      "mantie",
+      "meditație",
+      "ploaie",
+      "prăpastie"
+    ],
+    "a.o": [
+      "haos"
+    ],
+    "a.u": [
+      "scaun"
     ],
     "e": [
       "blestem",
@@ -190,11 +224,9 @@ const RHYME_INDEX = {
       "giuvaier",
       "grotesc",
       "lent",
-      "prieten",
       "raționament",
       "resentiment",
       "secret",
-      "vesel",
       "vârtej"
     ],
     "e.@": [
@@ -212,13 +244,6 @@ const RHYME_INDEX = {
       "reminiscență",
       "rezistență"
     ],
-    "e.a": [
-      "alerga",
-      "bea",
-      "cafea",
-      "spulbera",
-      "stea"
-    ],
     "e.e": [
       "bere",
       "deznădejde",
@@ -226,15 +251,38 @@ const RHYME_INDEX = {
       "miere",
       "perete",
       "pește",
+      "prieten",
       "putere",
       "rece",
       "tandrețe",
       "tăcere",
       "ureche",
-      "verde"
+      "verde",
+      "vesel"
+    ],
+    "e.i": [
+      "puternic",
+      "întuneric"
+    ],
+    "e.i.@": [
+      "dialectică",
+      "temniță"
+    ],
+    "e.i.e": [
+      "cheie",
+      "femeie",
+      "introspecție",
+      "scânteie",
+      "smerenie"
+    ],
+    "e.i.u": [
+      "imperiu"
     ],
     "e.u": [
       "sceptru"
+    ],
+    "e.u.e": [
+      "iepure"
     ],
     "i": [
       "abis",
@@ -242,6 +290,7 @@ const RHYME_INDEX = {
       "apriorism",
       "azil",
       "bunic",
+      "ceai",
       "citi",
       "copil",
       "coruptibil",
@@ -250,18 +299,13 @@ const RHYME_INDEX = {
       "empirism",
       "exil",
       "imponderabil",
-      "imuabil",
       "incoruptibil",
       "indelebil",
-      "indescifrabil",
-      "inefabil",
       "ineluctabil",
       "inextricabil",
       "infinit",
       "ireductibil",
-      "irevocabil",
       "labirint",
-      "lăuntric",
       "mic",
       "mit",
       "nestăvilit",
@@ -269,9 +313,7 @@ const RHYME_INDEX = {
       "nisip",
       "paralogism",
       "perfectibil",
-      "perisabil",
       "privi",
-      "puternic",
       "rapid",
       "raționalism",
       "relativism",
@@ -281,38 +323,26 @@ const RHYME_INDEX = {
       "sublim",
       "trist",
       "vecin",
-      "vin",
-      "întuneric"
+      "vin"
     ],
     "i.@": [
       "albină",
       "conștiință",
       "credință",
-      "dialectică",
       "enigmă",
-      "graniță",
       "găină",
       "hermeneutică",
-      "inimă",
-      "intrigă",
       "lumină",
-      "metafizică",
       "oglindă",
       "paradigmă",
       "pisică",
       "premisă",
-      "ruină",
-      "taină",
-      "temniță"
-    ],
-    "i.a": [
-      "preschimba"
+      "ruină"
     ],
     "i.e": [
       "abducție",
       "abulie",
       "acedie",
-      "ambiție",
       "amintire",
       "amnezie",
       "antinomie",
@@ -320,58 +350,34 @@ const RHYME_INDEX = {
       "aporie",
       "armonie",
       "bogăție",
-      "cheie",
       "cicatrice",
-      "concluzie",
       "contemplație",
-      "corupție",
-      "câine",
       "deducție",
-      "demonstrație",
       "dezamăgire",
       "dinte",
       "entropie",
       "escatologie",
       "euforie",
-      "femeie",
       "fenomenologie",
-      "fundație",
       "hârtie",
-      "iluzie",
-      "inducție",
-      "introspecție",
       "letargie",
       "lăcomie",
-      "lămâie",
-      "mantie",
-      "meditație",
       "melancolie",
-      "memorie",
       "moștenire",
-      "neliniște",
       "nemărginire",
       "nostalgie",
       "ontologie",
-      "ordine",
-      "ploaie",
       "premoniție",
       "presimțire",
       "presupoziție",
       "pribegie",
       "profeție",
-      "prăpastie",
-      "pâine",
       "reverie",
-      "roșie",
       "scrie",
-      "scânteie",
-      "smerenie",
       "soteriologie",
-      "supoziție",
       "sărăcie",
       "tautologie",
       "teleologie",
-      "tradiție",
       "trufie",
       "uimire",
       "uneltire",
@@ -380,11 +386,22 @@ const RHYME_INDEX = {
       "vremelnicie",
       "zădărnicie"
     ],
+    "i.i.@": [
+      "inimă",
+      "intrigă",
+      "metafizică"
+    ],
+    "i.i.e": [
+      "ambiție",
+      "neliniște",
+      "supoziție",
+      "tradiție"
+    ],
+    "i.i.u": [
+      "sacrificiu"
+    ],
     "i.u": [
       "echilibru",
-      "imperiu",
-      "refugiu",
-      "sacrificiu",
       "străveziu"
     ],
     "o": [
@@ -396,13 +413,10 @@ const RHYME_INDEX = {
       "complot",
       "copleșitor",
       "creion",
-      "doctor",
       "dormi",
       "foc",
       "frumos",
-      "haos",
       "molcom",
-      "morcov",
       "necruțător",
       "nor",
       "ochi",
@@ -429,15 +443,22 @@ const RHYME_INDEX = {
     "o.e": [
       "fasole"
     ],
-    "o.u": [
-      "ou"
+    "o.i.e": [
+      "memorie",
+      "ordine",
+      "roșie"
+    ],
+    "o.o": [
+      "doctor",
+      "morcov"
     ],
     "u": [
       "drum",
       "făuri",
       "iubi",
       "lup",
-      "scaun",
+      "ou",
+      "râu",
       "trecut",
       "unt",
       "urs"
@@ -459,10 +480,6 @@ const RHYME_INDEX = {
       "umbră",
       "ușă"
     ],
-    "u.a": [
-      "asculta",
-      "subjuga"
-    ],
     "u.e": [
       "abstracțiune",
       "amărăciune",
@@ -470,7 +487,6 @@ const RHYME_INDEX = {
       "culme",
       "cătușe",
       "deșertăciune",
-      "iepure",
       "munte",
       "pădure",
       "rațiune",
@@ -479,16 +495,30 @@ const RHYME_INDEX = {
       "vulpe"
     ],
     "u.i": [
-      "dezlănțui",
-      "dezvălui",
-      "dăinui",
+      "lăuntric",
       "plăsmui",
       "tăinui"
+    ],
+    "u.i.e": [
+      "concluzie",
+      "corupție",
+      "iluzie",
+      "inducție"
+    ],
+    "u.i.u": [
+      "refugiu"
     ]
   },
   "perfect": {
     "1.d.e": [
       "râde"
+    ],
+    "1.i.e": [
+      "lămâie"
+    ],
+    "1.i.n.e": [
+      "câine",
+      "pâine"
     ],
     "1.m": [
       "tărâm"
@@ -503,15 +533,9 @@ const RHYME_INDEX = {
       "plânge",
       "înfrânge"
     ],
-    "1.n.k.a": [
-      "mânca"
-    ],
     "1.n.t": [
       "veșmânt",
       "vânt"
-    ],
-    "1.n.t.a": [
-      "cânta"
     ],
     "1.n.z.@": [
       "brânză"
@@ -528,26 +552,36 @@ const RHYME_INDEX = {
     "1.t": [
       "urât"
     ],
-    "1.u": [
-      "râu"
+    "@.i.n.u.i": [
+      "dăinui"
     ],
-    "@.m.a": [
-      "destrăma"
+    "@.l.u.i": [
+      "dezvălui"
+    ],
+    "@.n.T.u.i": [
+      "dezlănțui"
     ],
     "@.r": [
       "adevăr",
       "măr",
-      "păr",
-      "zahăr"
-    ],
-    "@.r.@": [
-      "flacără"
-    ],
-    "@.r.e": [
-      "pasăre"
+      "păr"
     ],
     "@.r.j": [
       "sări"
+    ],
+    "a": [
+      "alerga",
+      "asculta",
+      "bea",
+      "cafea",
+      "cânta",
+      "dansa",
+      "destrăma",
+      "mânca",
+      "preschimba",
+      "spulbera",
+      "stea",
+      "subjuga"
     ],
     "a.S": [
       "oraș"
@@ -558,25 +592,46 @@ const RHYME_INDEX = {
     "a.T.@": [
       "fortăreață"
     ],
+    "a.T.i.e": [
+      "demonstrație",
+      "fundație",
+      "meditație"
+    ],
     "a.Z": [
       "curaj"
     ],
     "a.Z.@": [
       "vrajă"
     ],
+    "a.b.i.l": [
+      "imuabil",
+      "indescifrabil",
+      "inefabil",
+      "irevocabil",
+      "perisabil"
+    ],
     "a.d.@": [
       "stradă",
       "tăgadă",
       "zăpadă"
     ],
-    "a.i": [
-      "ceai"
+    "a.h.@.r": [
+      "zahăr"
+    ],
+    "a.i.e": [
+      "ploaie"
+    ],
+    "a.i.n.@": [
+      "taină"
     ],
     "a.k": [
       "copac"
     ],
     "a.k.@": [
       "vacă"
+    ],
+    "a.k.@.r.@": [
+      "flacără"
     ],
     "a.l": [
       "cal",
@@ -610,11 +665,17 @@ const RHYME_INDEX = {
     "a.n.T.@": [
       "speranță"
     ],
+    "a.n.i.T.@": [
+      "graniță"
+    ],
     "a.n.j": [
       "bani"
     ],
-    "a.n.s.a": [
-      "dansa"
+    "a.n.t.i.e": [
+      "mantie"
+    ],
+    "a.o.s": [
+      "haos"
     ],
     "a.p": [
       "cap"
@@ -675,6 +736,12 @@ const RHYME_INDEX = {
     "a.s.@": [
       "casă",
       "masă"
+    ],
+    "a.s.@.r.e": [
+      "pasăre"
+    ],
+    "a.s.t.i.e": [
+      "prăpastie"
     ],
     "a.t": [
       "băiat",
@@ -746,6 +813,9 @@ const RHYME_INDEX = {
     "a.t.r.@": [
       "piatră"
     ],
+    "a.u.n": [
+      "scaun"
+    ],
     "a.v.@": [
       "otravă"
     ],
@@ -767,16 +837,19 @@ const RHYME_INDEX = {
     "e.Z.d.e": [
       "deznădejde"
     ],
-    "e.a": [
-      "bea",
-      "cafea",
-      "stea"
+    "e.i.e": [
+      "cheie",
+      "femeie",
+      "scânteie"
+    ],
+    "e.k.T.i.e": [
+      "introspecție"
     ],
     "e.k.e": [
       "ureche"
     ],
-    "e.l": [
-      "vesel"
+    "e.k.t.i.k.@": [
+      "dialectică"
     ],
     "e.m": [
       "blestem"
@@ -785,8 +858,8 @@ const RHYME_INDEX = {
       "epistemă",
       "lemă"
     ],
-    "e.n": [
-      "prieten"
+    "e.m.n.i.T.@": [
+      "temniță"
     ],
     "e.n.T.@": [
       "ambivalență",
@@ -801,6 +874,9 @@ const RHYME_INDEX = {
     "e.n.d.@": [
       "legendă"
     ],
+    "e.n.i.e": [
+      "smerenie"
+    ],
     "e.n.t": [
       "lent",
       "raționament",
@@ -809,13 +885,13 @@ const RHYME_INDEX = {
     "e.p.t.r.u": [
       "sceptru"
     ],
+    "e.p.u.r.e": [
+      "iepure"
+    ],
     "e.r": [
       "cer",
       "efemer",
       "giuvaier"
-    ],
-    "e.r.a": [
-      "spulbera"
     ],
     "e.r.d.e": [
       "verde"
@@ -829,14 +905,23 @@ const RHYME_INDEX = {
       "putere",
       "tăcere"
     ],
-    "e.r.g.a": [
-      "alerga"
+    "e.r.i.k": [
+      "întuneric"
+    ],
+    "e.r.i.u": [
+      "imperiu"
     ],
     "e.r.j": [
       "cuceri"
     ],
     "e.r.n": [
       "etern"
+    ],
+    "e.r.n.i.k": [
+      "puternic"
+    ],
+    "e.s.e.l": [
+      "vesel"
     ],
     "e.s.k": [
       "grotesc"
@@ -846,6 +931,9 @@ const RHYME_INDEX = {
     ],
     "e.t.e": [
       "perete"
+    ],
+    "e.t.e.n": [
+      "prieten"
     ],
     "e.tS.e": [
       "rece"
@@ -857,12 +945,13 @@ const RHYME_INDEX = {
       "anamneză",
       "ipoteză"
     ],
-    "i.S.t.e": [
-      "neliniște"
+    "i": [
+      "ceai"
     ],
-    "i.T.@": [
-      "graniță",
-      "temniță"
+    "i.T.i.e": [
+      "ambiție",
+      "supoziție",
+      "tradiție"
     ],
     "i.b.r.u": [
       "echilibru"
@@ -874,63 +963,39 @@ const RHYME_INDEX = {
       "abducție",
       "abulie",
       "acedie",
-      "ambiție",
       "amnezie",
       "antinomie",
       "apatie",
       "aporie",
       "armonie",
       "bogăție",
-      "cheie",
-      "concluzie",
       "contemplație",
-      "corupție",
       "deducție",
-      "demonstrație",
       "entropie",
       "escatologie",
       "euforie",
-      "femeie",
       "fenomenologie",
-      "fundație",
       "hârtie",
-      "iluzie",
-      "inducție",
-      "introspecție",
       "letargie",
       "lăcomie",
-      "lămâie",
-      "mantie",
-      "meditație",
       "melancolie",
-      "memorie",
       "nostalgie",
       "ontologie",
-      "ploaie",
       "premoniție",
       "presupoziție",
       "pribegie",
       "profeție",
-      "prăpastie",
       "reverie",
-      "roșie",
       "scrie",
-      "scânteie",
-      "smerenie",
       "soteriologie",
-      "supoziție",
       "sărăcie",
       "tautologie",
       "teleologie",
-      "tradiție",
       "trufie",
       "venerație",
       "vinovăție",
       "vremelnicie",
       "zădărnicie"
-    ],
-    "i.g.@": [
-      "intrigă"
     ],
     "i.g.m.@": [
       "enigmă",
@@ -938,15 +1003,10 @@ const RHYME_INDEX = {
     ],
     "i.k": [
       "bunic",
-      "lăuntric",
-      "mic",
-      "puternic",
-      "întuneric"
+      "mic"
     ],
     "i.k.@": [
-      "dialectică",
       "hermeneutică",
-      "metafizică",
       "pisică"
     ],
     "i.l": [
@@ -955,26 +1015,15 @@ const RHYME_INDEX = {
       "coruptibil",
       "exil",
       "imponderabil",
-      "imuabil",
       "incoruptibil",
       "indelebil",
-      "indescifrabil",
-      "inefabil",
       "ineluctabil",
       "inextricabil",
       "ireductibil",
-      "irevocabil",
-      "perfectibil",
-      "perisabil"
+      "perfectibil"
     ],
     "i.m": [
       "sublim"
-    ],
-    "i.m.@": [
-      "inimă"
-    ],
-    "i.m.b.a": [
-      "preschimba"
     ],
     "i.n": [
       "destin",
@@ -985,8 +1034,7 @@ const RHYME_INDEX = {
       "albină",
       "găină",
       "lumină",
-      "ruină",
-      "taină"
+      "ruină"
     ],
     "i.n.T.@": [
       "conștiință",
@@ -995,16 +1043,20 @@ const RHYME_INDEX = {
     "i.n.d.@": [
       "oglindă"
     ],
-    "i.n.e": [
-      "câine",
-      "ordine",
-      "pâine"
+    "i.n.i.S.t.e": [
+      "neliniște"
+    ],
+    "i.n.i.m.@": [
+      "inimă"
     ],
     "i.n.t": [
       "labirint"
     ],
     "i.n.t.e": [
       "dinte"
+    ],
+    "i.n.t.r.i.g.@": [
+      "intrigă"
     ],
     "i.p": [
       "nisip"
@@ -1051,14 +1103,20 @@ const RHYME_INDEX = {
     "i.tS.e": [
       "cicatrice"
     ],
+    "i.tS.i.u": [
+      "sacrificiu"
+    ],
     "i.u": [
-      "imperiu",
-      "refugiu",
-      "sacrificiu",
       "străveziu"
     ],
     "i.v.j": [
       "privi"
+    ],
+    "i.z.i.k.@": [
+      "metafizică"
+    ],
+    "o.S.i.e": [
+      "roșie"
     ],
     "o.f": [
       "cartof"
@@ -1068,6 +1126,9 @@ const RHYME_INDEX = {
     ],
     "o.k.j": [
       "ochi"
+    ],
+    "o.k.t.o.r": [
+      "doctor"
     ],
     "o.l.@": [
       "busolă",
@@ -1099,7 +1160,6 @@ const RHYME_INDEX = {
       "ademenitor",
       "amăgitor",
       "copleșitor",
-      "doctor",
       "necruțător",
       "nor",
       "picior",
@@ -1117,25 +1177,31 @@ const RHYME_INDEX = {
     "o.r.b.j": [
       "vorbi"
     ],
+    "o.r.d.i.n.e": [
+      "ordine"
+    ],
+    "o.r.i.e": [
+      "memorie"
+    ],
     "o.r.k": [
       "porc"
+    ],
+    "o.r.k.o.v": [
+      "morcov"
     ],
     "o.r.m.j": [
       "dormi"
     ],
     "o.s": [
-      "frumos",
-      "haos"
+      "frumos"
     ],
     "o.t": [
       "antidot",
       "complot"
     ],
-    "o.u": [
-      "ou"
-    ],
-    "o.v": [
-      "morcov"
+    "u": [
+      "ou",
+      "râu"
     ],
     "u.S.@": [
       "cenușă",
@@ -1147,18 +1213,18 @@ const RHYME_INDEX = {
     "u.b.j": [
       "iubi"
     ],
-    "u.g.a": [
-      "subjuga"
+    "u.dZ.i.u": [
+      "refugiu"
     ],
     "u.i": [
-      "dezlănțui",
-      "dezvălui",
-      "dăinui",
       "plăsmui",
       "tăinui"
     ],
     "u.k.@": [
       "nucă"
+    ],
+    "u.k.T.i.e": [
+      "inducție"
     ],
     "u.l.m.e": [
       "culme"
@@ -1166,17 +1232,11 @@ const RHYME_INDEX = {
     "u.l.p.e": [
       "vulpe"
     ],
-    "u.l.t.a": [
-      "asculta"
-    ],
     "u.m": [
       "drum"
     ],
     "u.m.b.r.@": [
       "umbră"
-    ],
-    "u.n": [
-      "scaun"
     ],
     "u.n.@": [
       "căpșună",
@@ -1198,6 +1258,9 @@ const RHYME_INDEX = {
     "u.n.t.e": [
       "munte"
     ],
+    "u.n.t.r.i.k": [
+      "lăuntric"
+    ],
     "u.n.z.@": [
       "frunză"
     ],
@@ -1207,13 +1270,15 @@ const RHYME_INDEX = {
     "u.p.@": [
       "supă"
     ],
+    "u.p.T.i.e": [
+      "corupție"
+    ],
     "u.r.@": [
       "conjectură",
       "gură",
       "prăjitură"
     ],
     "u.r.e": [
-      "iepure",
       "pădure",
       "strugure"
     ],
@@ -1231,6 +1296,10 @@ const RHYME_INDEX = {
     ],
     "u.tS.e": [
       "răscruce"
+    ],
+    "u.z.i.e": [
+      "concluzie",
+      "iluzie"
     ]
   }
 };
@@ -1287,9 +1356,9 @@ const RHYME_KEYS = {
     "p": "i.n.@"
   },
   "alerga": {
-    "a": "e.a",
+    "a": "a",
     "n": 3,
-    "p": "e.r.g.a"
+    "p": "a"
   },
   "alteritate": {
     "a": "a.e",
@@ -1307,9 +1376,9 @@ const RHYME_KEYS = {
     "p": "e.n.T.@"
   },
   "ambiție": {
-    "a": "i.e",
+    "a": "i.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "i.T.i.e"
   },
   "amintire": {
     "a": "i.e",
@@ -1387,9 +1456,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "asculta": {
-    "a": "u.a",
+    "a": "a",
     "n": 3,
-    "p": "u.l.t.a"
+    "p": "a"
   },
   "axiomă": {
     "a": "o.@",
@@ -1407,9 +1476,9 @@ const RHYME_KEYS = {
     "p": "a.n.j"
   },
   "bea": {
-    "a": "e.a",
+    "a": "a",
     "n": 2,
-    "p": "e.a"
+    "p": "a"
   },
   "bere": {
     "a": "e.e",
@@ -1452,9 +1521,9 @@ const RHYME_KEYS = {
     "p": "a.t"
   },
   "cafea": {
-    "a": "e.a",
+    "a": "a",
     "n": 3,
-    "p": "e.a"
+    "p": "a"
   },
   "cal": {
     "a": "a",
@@ -1497,9 +1566,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "ceai": {
-    "a": "a.i",
+    "a": "i",
     "n": 3,
-    "p": "a.i"
+    "p": "i"
   },
   "ceapă": {
     "a": "a.@",
@@ -1527,9 +1596,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "cheie": {
-    "a": "i.e",
+    "a": "e.i.e",
     "n": 3,
-    "p": "i.e"
+    "p": "e.i.e"
   },
   "cicatrice": {
     "a": "i.e",
@@ -1577,9 +1646,9 @@ const RHYME_KEYS = {
     "p": "a.r.e"
   },
   "concluzie": {
-    "a": "i.e",
+    "a": "u.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "u.z.i.e"
   },
   "concomitență": {
     "a": "e.@",
@@ -1647,9 +1716,9 @@ const RHYME_KEYS = {
     "p": "i.l"
   },
   "corupție": {
-    "a": "i.e",
+    "a": "u.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "u.p.T.i.e"
   },
   "credință": {
     "a": "i.@",
@@ -1677,14 +1746,14 @@ const RHYME_KEYS = {
     "p": "a.Z"
   },
   "câine": {
-    "a": "i.e",
+    "a": "1.i.e",
     "n": 3,
-    "p": "i.n.e"
+    "p": "1.i.n.e"
   },
   "cânta": {
-    "a": "1.a",
+    "a": "a",
     "n": 2,
-    "p": "1.n.t.a"
+    "p": "a"
   },
   "căpșună": {
     "a": "u.@",
@@ -1702,9 +1771,9 @@ const RHYME_KEYS = {
     "p": "u.S.e"
   },
   "dansa": {
-    "a": "a.a",
+    "a": "a",
     "n": 2,
-    "p": "a.n.s.a"
+    "p": "a"
   },
   "deducție": {
     "a": "i.e",
@@ -1712,9 +1781,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "demonstrație": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 5,
-    "p": "i.e"
+    "p": "a.T.i.e"
   },
   "destin": {
     "a": "i",
@@ -1722,9 +1791,9 @@ const RHYME_KEYS = {
     "p": "i.n"
   },
   "destrăma": {
-    "a": "@.a",
+    "a": "a",
     "n": 3,
-    "p": "@.m.a"
+    "p": "a"
   },
   "desăvârși": {
     "a": "1",
@@ -1742,9 +1811,9 @@ const RHYME_KEYS = {
     "p": "i.r.e"
   },
   "dezlănțui": {
-    "a": "u.i",
+    "a": "@.u.i",
     "n": 4,
-    "p": "u.i"
+    "p": "@.n.T.u.i"
   },
   "deznădejde": {
     "a": "e.e",
@@ -1752,9 +1821,9 @@ const RHYME_KEYS = {
     "p": "e.Z.d.e"
   },
   "dezvălui": {
-    "a": "u.i",
+    "a": "@.u.i",
     "n": 4,
-    "p": "u.i"
+    "p": "@.l.u.i"
   },
   "deșertăciune": {
     "a": "u.e",
@@ -1762,9 +1831,9 @@ const RHYME_KEYS = {
     "p": "u.n.e"
   },
   "dialectică": {
-    "a": "i.@",
+    "a": "e.i.@",
     "n": 5,
-    "p": "i.k.@"
+    "p": "e.k.t.i.k.@"
   },
   "dinte": {
     "a": "i.e",
@@ -1777,9 +1846,9 @@ const RHYME_KEYS = {
     "p": "e.T"
   },
   "doctor": {
-    "a": "o",
+    "a": "o.o",
     "n": 2,
-    "p": "o.r"
+    "p": "o.k.t.o.r"
   },
   "dormi": {
     "a": "o",
@@ -1797,9 +1866,9 @@ const RHYME_KEYS = {
     "p": "1.r.z"
   },
   "dăinui": {
-    "a": "u.i",
+    "a": "@.i.u.i",
     "n": 4,
-    "p": "u.i"
+    "p": "@.i.n.u.i"
   },
   "echilibru": {
     "a": "i.u",
@@ -1912,9 +1981,9 @@ const RHYME_KEYS = {
     "p": "a.t.@"
   },
   "femeie": {
-    "a": "i.e",
+    "a": "e.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "e.i.e"
   },
   "fenomenologie": {
     "a": "i.e",
@@ -1927,9 +1996,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "flacără": {
-    "a": "@.@",
+    "a": "a.@.@",
     "n": 3,
-    "p": "@.r.@"
+    "p": "a.k.@.r.@"
   },
   "floare": {
     "a": "a.e",
@@ -1967,9 +2036,9 @@ const RHYME_KEYS = {
     "p": "a.r.e"
   },
   "fundație": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "a.T.i.e"
   },
   "furtună": {
     "a": "u.@",
@@ -1997,9 +2066,9 @@ const RHYME_KEYS = {
     "p": "e.r"
   },
   "graniță": {
-    "a": "i.@",
+    "a": "a.i.@",
     "n": 3,
-    "p": "i.T.@"
+    "p": "a.n.i.T.@"
   },
   "grotesc": {
     "a": "e",
@@ -2017,9 +2086,9 @@ const RHYME_KEYS = {
     "p": "i.n.@"
   },
   "haos": {
-    "a": "o",
+    "a": "a.o",
     "n": 2,
-    "p": "o.s"
+    "p": "a.o.s"
   },
   "hermeneutică": {
     "a": "i.@",
@@ -2042,14 +2111,14 @@ const RHYME_KEYS = {
     "p": "a.r.b.@"
   },
   "iepure": {
-    "a": "u.e",
+    "a": "e.u.e",
     "n": 4,
-    "p": "u.r.e"
+    "p": "e.p.u.r.e"
   },
   "iluzie": {
-    "a": "i.e",
+    "a": "u.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "u.z.i.e"
   },
   "imanență": {
     "a": "e.@",
@@ -2062,9 +2131,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "imperiu": {
-    "a": "i.u",
+    "a": "e.i.u",
     "n": 4,
-    "p": "i.u"
+    "p": "e.r.i.u"
   },
   "imponderabil": {
     "a": "i",
@@ -2077,9 +2146,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "imuabil": {
-    "a": "i",
+    "a": "a.i",
     "n": 4,
-    "p": "i.l"
+    "p": "a.b.i.l"
   },
   "incongruență": {
     "a": "e.@",
@@ -2097,9 +2166,9 @@ const RHYME_KEYS = {
     "p": "i.l"
   },
   "indescifrabil": {
-    "a": "i",
+    "a": "a.i",
     "n": 5,
-    "p": "i.l"
+    "p": "a.b.i.l"
   },
   "indignare": {
     "a": "a.e",
@@ -2107,14 +2176,14 @@ const RHYME_KEYS = {
     "p": "a.r.e"
   },
   "inducție": {
-    "a": "i.e",
+    "a": "u.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "u.k.T.i.e"
   },
   "inefabil": {
-    "a": "i",
+    "a": "a.i",
     "n": 4,
-    "p": "i.l"
+    "p": "a.b.i.l"
   },
   "ineluctabil": {
     "a": "i",
@@ -2152,9 +2221,9 @@ const RHYME_KEYS = {
     "p": "a.r.e"
   },
   "inimă": {
-    "a": "i.@",
+    "a": "i.i.@",
     "n": 3,
-    "p": "i.m.@"
+    "p": "i.n.i.m.@"
   },
   "intangibilitate": {
     "a": "a.e",
@@ -2172,14 +2241,14 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "intrigă": {
-    "a": "i.@",
+    "a": "i.i.@",
     "n": 3,
-    "p": "i.g.@"
+    "p": "i.n.t.r.i.g.@"
   },
   "introspecție": {
-    "a": "i.e",
+    "a": "e.i.e",
     "n": 5,
-    "p": "i.e"
+    "p": "e.k.T.i.e"
   },
   "ipoteză": {
     "a": "e.@",
@@ -2192,9 +2261,9 @@ const RHYME_KEYS = {
     "p": "i.l"
   },
   "irevocabil": {
-    "a": "i",
+    "a": "a.i",
     "n": 5,
-    "p": "i.l"
+    "p": "a.b.i.l"
   },
   "iubi": {
     "a": "u",
@@ -2272,14 +2341,14 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "lămâie": {
-    "a": "i.e",
+    "a": "1.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "1.i.e"
   },
   "lăuntric": {
-    "a": "i",
+    "a": "u.i",
     "n": 3,
-    "p": "i.k"
+    "p": "u.n.t.r.i.k"
   },
   "mamă": {
     "a": "a.@",
@@ -2287,9 +2356,9 @@ const RHYME_KEYS = {
     "p": "a.m.@"
   },
   "mantie": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 3,
-    "p": "i.e"
+    "p": "a.n.t.i.e"
   },
   "mare": {
     "a": "a.e",
@@ -2302,9 +2371,9 @@ const RHYME_KEYS = {
     "p": "a.s.@"
   },
   "meditație": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 5,
-    "p": "i.e"
+    "p": "a.T.i.e"
   },
   "melancolie": {
     "a": "i.e",
@@ -2312,9 +2381,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "memorie": {
-    "a": "i.e",
+    "a": "o.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "o.r.i.e"
   },
   "merge": {
     "a": "e.e",
@@ -2322,9 +2391,9 @@ const RHYME_KEYS = {
     "p": "e.r.dZ.e"
   },
   "metafizică": {
-    "a": "i.@",
+    "a": "i.i.@",
     "n": 5,
-    "p": "i.k.@"
+    "p": "i.z.i.k.@"
   },
   "mic": {
     "a": "i",
@@ -2362,9 +2431,9 @@ const RHYME_KEYS = {
     "p": "a.l"
   },
   "morcov": {
-    "a": "o",
+    "a": "o.o",
     "n": 2,
-    "p": "o.v"
+    "p": "o.r.k.o.v"
   },
   "moștenire": {
     "a": "i.e",
@@ -2382,9 +2451,9 @@ const RHYME_KEYS = {
     "p": "u.s.k.@"
   },
   "mânca": {
-    "a": "1.a",
+    "a": "a",
     "n": 2,
-    "p": "1.n.k.a"
+    "p": "a"
   },
   "mână": {
     "a": "1.@",
@@ -2417,9 +2486,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "neliniște": {
-    "a": "i.e",
+    "a": "i.i.e",
     "n": 4,
-    "p": "i.S.t.e"
+    "p": "i.n.i.S.t.e"
   },
   "nemărginire": {
     "a": "i.e",
@@ -2497,9 +2566,9 @@ const RHYME_KEYS = {
     "p": "a.S"
   },
   "ordine": {
-    "a": "i.e",
+    "a": "o.i.e",
     "n": 3,
-    "p": "i.n.e"
+    "p": "o.r.d.i.n.e"
   },
   "orizont": {
     "a": "o",
@@ -2512,9 +2581,9 @@ const RHYME_KEYS = {
     "p": "a.v.@"
   },
   "ou": {
-    "a": "o.u",
+    "a": "u",
     "n": 2,
-    "p": "o.u"
+    "p": "u"
   },
   "parabolă": {
     "a": "o.@",
@@ -2537,9 +2606,9 @@ const RHYME_KEYS = {
     "p": "a.r.@"
   },
   "pasăre": {
-    "a": "@.e",
+    "a": "a.@.e",
     "n": 3,
-    "p": "@.r.e"
+    "p": "a.s.@.r.e"
   },
   "pat": {
     "a": "a",
@@ -2562,9 +2631,9 @@ const RHYME_KEYS = {
     "p": "i.l"
   },
   "perisabil": {
-    "a": "i",
+    "a": "a.i",
     "n": 4,
-    "p": "i.l"
+    "p": "a.b.i.l"
   },
   "perisabilitate": {
     "a": "a.e",
@@ -2597,9 +2666,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "ploaie": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "a.i.e"
   },
   "plânge": {
     "a": "1.e",
@@ -2642,9 +2711,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "preschimba": {
-    "a": "i.a",
+    "a": "a",
     "n": 3,
-    "p": "i.m.b.a"
+    "p": "a"
   },
   "presimțire": {
     "a": "i.e",
@@ -2667,9 +2736,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "prieten": {
-    "a": "e",
+    "a": "e.e",
     "n": 3,
-    "p": "e.n"
+    "p": "e.t.e.n"
   },
   "privi": {
     "a": "i",
@@ -2697,9 +2766,9 @@ const RHYME_KEYS = {
     "p": "u.r.@"
   },
   "prăpastie": {
-    "a": "i.e",
+    "a": "a.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "a.s.t.i.e"
   },
   "putere": {
     "a": "e.e",
@@ -2707,14 +2776,14 @@ const RHYME_KEYS = {
     "p": "e.r.e"
   },
   "puternic": {
-    "a": "i",
+    "a": "e.i",
     "n": 3,
-    "p": "i.k"
+    "p": "e.r.n.i.k"
   },
   "pâine": {
-    "a": "i.e",
+    "a": "1.i.e",
     "n": 3,
-    "p": "i.n.e"
+    "p": "1.i.n.e"
   },
   "pădure": {
     "a": "u.e",
@@ -2762,9 +2831,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "refugiu": {
-    "a": "i.u",
+    "a": "u.i.u",
     "n": 4,
-    "p": "i.u"
+    "p": "u.dZ.i.u"
   },
   "relativism": {
     "a": "i",
@@ -2807,9 +2876,9 @@ const RHYME_KEYS = {
     "p": "e.n.T.@"
   },
   "roșie": {
-    "a": "i.e",
+    "a": "o.i.e",
     "n": 3,
-    "p": "i.e"
+    "p": "o.S.i.e"
   },
   "ruină": {
     "a": "i.@",
@@ -2822,9 +2891,9 @@ const RHYME_KEYS = {
     "p": "1.d.e"
   },
   "râu": {
-    "a": "1.u",
+    "a": "u",
     "n": 2,
-    "p": "1.u"
+    "p": "u"
   },
   "răscruce": {
     "a": "u.e",
@@ -2832,9 +2901,9 @@ const RHYME_KEYS = {
     "p": "u.tS.e"
   },
   "sacrificiu": {
-    "a": "i.u",
+    "a": "i.i.u",
     "n": 5,
-    "p": "i.u"
+    "p": "i.tS.i.u"
   },
   "sare": {
     "a": "a.e",
@@ -2847,9 +2916,9 @@ const RHYME_KEYS = {
     "p": "a.t"
   },
   "scaun": {
-    "a": "u",
+    "a": "a.u",
     "n": 2,
-    "p": "u.n"
+    "p": "a.u.n"
   },
   "sceptru": {
     "a": "e.u",
@@ -2862,9 +2931,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "scânteie": {
-    "a": "i.e",
+    "a": "e.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "e.i.e"
   },
   "secret": {
     "a": "e",
@@ -2892,9 +2961,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "smerenie": {
-    "a": "i.e",
+    "a": "e.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "e.n.i.e"
   },
   "soare": {
     "a": "a.e",
@@ -2942,14 +3011,14 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "spulbera": {
-    "a": "e.a",
+    "a": "a",
     "n": 3,
-    "p": "e.r.a"
+    "p": "a"
   },
   "stea": {
-    "a": "e.a",
+    "a": "a",
     "n": 2,
-    "p": "e.a"
+    "p": "a"
   },
   "stipulare": {
     "a": "a.e",
@@ -2982,9 +3051,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "subjuga": {
-    "a": "u.a",
+    "a": "a",
     "n": 3,
-    "p": "u.g.a"
+    "p": "a"
   },
   "sublim": {
     "a": "i",
@@ -2997,9 +3066,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "supoziție": {
-    "a": "i.e",
+    "a": "i.i.e",
     "n": 5,
-    "p": "i.e"
+    "p": "i.T.i.e"
   },
   "supă": {
     "a": "u.@",
@@ -3017,9 +3086,9 @@ const RHYME_KEYS = {
     "p": "i.e"
   },
   "taină": {
-    "a": "i.@",
+    "a": "a.i.@",
     "n": 3,
-    "p": "i.n.@"
+    "p": "a.i.n.@"
   },
   "talisman": {
     "a": "a",
@@ -3057,9 +3126,9 @@ const RHYME_KEYS = {
     "p": "a.r"
   },
   "temniță": {
-    "a": "i.@",
+    "a": "e.i.@",
     "n": 3,
-    "p": "i.T.@"
+    "p": "e.m.n.i.T.@"
   },
   "temporalitate": {
     "a": "a.e",
@@ -3072,9 +3141,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "tradiție": {
-    "a": "i.e",
+    "a": "i.i.e",
     "n": 4,
-    "p": "i.e"
+    "p": "i.T.i.e"
   },
   "trecut": {
     "a": "u",
@@ -3207,9 +3276,9 @@ const RHYME_KEYS = {
     "p": "a.t.e"
   },
   "vesel": {
-    "a": "e",
+    "a": "e.e",
     "n": 2,
-    "p": "e.l"
+    "p": "e.s.e.l"
   },
   "veșmânt": {
     "a": "1",
@@ -3277,9 +3346,9 @@ const RHYME_KEYS = {
     "p": "e.Z"
   },
   "zahăr": {
-    "a": "@",
+    "a": "a.@",
     "n": 2,
-    "p": "@.r"
+    "p": "a.h.@.r"
   },
   "zădărnicie": {
     "a": "i.e",
@@ -3312,9 +3381,9 @@ const RHYME_KEYS = {
     "p": "a.t"
   },
   "întuneric": {
-    "a": "i",
+    "a": "e.i",
     "n": 4,
-    "p": "i.k"
+    "p": "e.r.i.k"
   },
   "șarpe": {
     "a": "a.e",
@@ -3323,4 +3392,6 @@ const RHYME_KEYS = {
   }
 };
 
-const RHYME_META = { count: 417, hash: "92ee5a54e7c9bb54952c3b0d2dda9a99ee488d87a5fff596645c555b30efe692" };
+const RHYME_STRESS = {"alerga": 0, "ambiție": 2, "asculta": 0, "bea": 0, "cafea": 0, "ceai": 0, "cheie": 2, "concluzie": 2, "corupție": 2, "câine": 2, "cânta": 0, "dansa": 0, "demonstrație": 2, "destrăma": 0, "dezlănțui": 2, "dezvălui": 2, "dialectică": 2, "doctor": 1, "dăinui": 3, "femeie": 2, "flacără": 2, "fundație": 2, "graniță": 2, "haos": 1, "iepure": 2, "iluzie": 2, "imperiu": 2, "imuabil": 1, "indescifrabil": 1, "inducție": 2, "inefabil": 1, "inimă": 2, "intrigă": 2, "introspecție": 2, "irevocabil": 1, "lămâie": 2, "lăuntric": 1, "mantie": 2, "meditație": 2, "memorie": 2, "metafizică": 2, "morcov": 1, "mânca": 0, "neliniște": 2, "ordine": 2, "ou": 0, "pasăre": 2, "perisabil": 1, "ploaie": 2, "preschimba": 0, "prieten": 1, "prăpastie": 2, "puternic": 1, "pâine": 2, "refugiu": 2, "roșie": 2, "râu": 0, "sacrificiu": 2, "scaun": 1, "scânteie": 2, "smerenie": 2, "spulbera": 0, "stea": 0, "subjuga": 0, "supoziție": 2, "taină": 2, "temniță": 2, "tradiție": 2, "vesel": 1, "zahăr": 1, "întuneric": 1};
+
+const RHYME_META = { count: 417, hash: "5dfdc2744250d3a7242b3afa1e354fbecf09fb91e5b0a28389f624d77184b283" };

@@ -355,14 +355,16 @@ function g2p(word) {
   return toks;
 }
 
-// cheile de rimă pt un cuvânt arbitrar (fără override de accent — bank-ul folosește RHYME_KEYS)
+// cheile de rimă pt un cuvânt; aplică override-ul de accent din RHYME_STRESS (RoLEX) — oglindă Python
 function rhymeKeysFor(word) {
   const toks = g2p(word);
   const nuc = [];
   for (let k = 0; k < toks.length; k++) if (toks[k][1]) nuc.push(k);
   if (!nuc.length) return null;
+  const ov = (typeof RHYME_STRESS !== 'undefined') ? RHYME_STRESS[word] : undefined;
   let s;
-  if (toks[toks.length - 1][1]) s = nuc.length >= 2 ? nuc[nuc.length - 2] : nuc[nuc.length - 1];
+  if (Number.isInteger(ov) && ov >= 0 && ov < nuc.length) s = nuc[nuc.length - 1 - ov];
+  else if (toks[toks.length - 1][1]) s = nuc.length >= 2 ? nuc[nuc.length - 2] : nuc[nuc.length - 1];
   else s = nuc[nuc.length - 1];
   const tail = toks.slice(s);
   return {
