@@ -154,6 +154,20 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   de tastare (drawer) a fost SCOASĂ din UI la cererea owner-ului (D41) → FR-13 ne-surfacat în v2; doar
   capabilitatea rămâne în cod (pt voce / re-adăugare). Rimele ambientale (D41) sunt singura suprafață.
 
+- **D42 ▲ NEW — Backfill RoLEX pt cuvintele sub-deservite (rezolvă OQ-V3).** Cuvintele cu < 5 rime în
+  bancă (orfanele incluse — sceptru, haos, scaun…) primesc rime din **tot lexiconul RoLEX** prin
+  potrivire de sufix fonetic **grad 4 → grad 3** (câte foneme finale se potrivesc). Cerut de owner
+  („pentru cele fără rimă directă, ia grad 3/4"); **rimeaza.ro era sursa inițială dar e blocat
+  Cloudflare 403** → RoLEX (local) îl înlocuiește, fără scraping.
+  - **Filtre:** nume proprii (msd `Np`), flexiuni (aceeași lemă — RoLEX `=` = lemă-identică-cu-forma),
+    cuvinte din bancă.
+  - **Rang `wordfreq` (zipf RO):** COMUNELE întâi (pentru/nostru/patru peste sieptru/schiptru-arhaice).
+    Corpusul RO e mic → freq=0 NU e prag dur (artificiu/ceaun sunt valide); rarele-valide doar ca umplutură.
+  - **Pipeline (ca stress.json):** `gen_rhymes.py --from-rolex` (rulat în venv cu wordfreq) → derivă
+    `assets/rhyme_extra.json` (60 cuvinte) + emite `RHYME_EXTRA` în `rhymes.js`. **CI/runtime NU cer
+    RoLEX/wordfreq** — citesc fișierul comis. **STARE: LIVRAT.** Rezultat: **zero orfane** (toate au rime).
+  - Runtime: `rhymesFor` adaugă `RHYME_EXTRA[w]` ca backfill la 5 în hint-ul ambiental (D41).
+
 ---
 
 ### Voice Input (jumătatea riscantă)
@@ -294,9 +308,8 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   doar `assets/stress.json` (71 poziții de accent derivate) + `rhymes.js` (chei+liste) — date derivate,
   nu dump-ul RoLEX. Risc licență minim (fapte de pronunție pt 417 cuvinte). De reconfirmat doar la pivot
   comercial. (G2P-ul e reguli proprii în Python/JS, nu espeak/RoLEX.)
-- **OQ-V3:** rime doar din banca proprie (417, curate dar puține per cuvânt) vs dicționar mare (RoLEX
-  330k, volum dar ne-curat)? Recomandare: **hibrid** — banca proprie prima, backfill dintr-o felie RoLEX
-  filtrată pe frecvență.
+- **OQ-V3 ✅ REZOLVAT (2026-06-03, D42):** hibrid — banca proprie prima, backfill din RoLEX (grad 4→3,
+  filtrat de frecvență wordfreq) pt cuvintele sub-deservite. Implementat în `rhyme_extra.json`.
 - **OQ-V4:** doar rime perfecte sau și slant/asonanță? Recomandare: cascadă 3-tier (D37); MVP
   perfect+asonanță, slant complet în 8.4.
 - **OQ-V5 ✅ REZOLVAT (2026-06-03):** rima **SE SUPRAPUNE** peste generator — top-5 rime ambientale apar

@@ -1,6 +1,7 @@
-// AUTO-GENERAT din wordbank.json (+ assets/stress.json) — NU EDITA (rulează: python gen_rhymes.py)
+// AUTO-GENERAT din wordbank.json (+ assets/stress.json, assets/rhyme_extra.json) — NU EDITA (python gen_rhymes.py)
 // RHYME_INDEX: cheie_rimă → [cuvinte]. RHYME_KEYS: cuvânt → {p:perfect, a:asonanță, n:silabe}.
-// RHYME_STRESS: cuvânt → nucleu accentuat (de la final) — override-uri de accent (RoLEX), pt paritate JS.
+// RHYME_STRESS: cuvânt → nucleu accentuat (override accent RoLEX, paritate JS).
+// RHYME_EXTRA: cuvânt → rime externe (RoLEX) pt cele sub-deservite în bancă (grad 4→3).
 const RHYME_INDEX = {
   "asonanta": {
     "1": [
@@ -3394,4 +3395,455 @@ const RHYME_KEYS = {
 
 const RHYME_STRESS = {"alerga": 0, "ambiție": 2, "asculta": 0, "bea": 0, "cafea": 0, "ceai": 0, "cheie": 2, "concluzie": 2, "corupție": 2, "câine": 2, "cânta": 0, "dansa": 0, "demonstrație": 2, "destrăma": 0, "dezlănțui": 2, "dezvălui": 2, "dialectică": 2, "doctor": 1, "dăinui": 3, "femeie": 2, "flacără": 2, "fundație": 2, "graniță": 2, "haos": 1, "iepure": 2, "iluzie": 2, "imperiu": 2, "imuabil": 1, "indescifrabil": 1, "inducție": 2, "inefabil": 1, "inimă": 2, "intrigă": 2, "introspecție": 2, "irevocabil": 1, "lămâie": 2, "lăuntric": 1, "mantie": 2, "meditație": 2, "memorie": 2, "metafizică": 2, "morcov": 1, "mânca": 0, "neliniște": 2, "ordine": 2, "ou": 0, "pasăre": 2, "perisabil": 1, "ploaie": 2, "preschimba": 0, "prieten": 1, "prăpastie": 2, "puternic": 1, "pâine": 2, "refugiu": 2, "roșie": 2, "râu": 0, "sacrificiu": 2, "scaun": 1, "scânteie": 2, "smerenie": 2, "spulbera": 0, "stea": 0, "subjuga": 0, "supoziție": 2, "taină": 2, "temniță": 2, "tradiție": 2, "vesel": 1, "zahăr": 1, "întuneric": 1};
 
-const RHYME_META = { count: 417, hash: "5dfdc2744250d3a7242b3afa1e354fbecf09fb91e5b0a28389f624d77184b283" };
+const RHYME_EXTRA = {
+  "adevăr": [
+    "văr",
+    "neadevăr",
+    "ivăr"
+  ],
+  "ambiție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "brânză": [
+    "pânză",
+    "vânză",
+    "revânză",
+    "tinză",
+    "tunză",
+    "bronză"
+  ],
+  "cheie": [
+    "ncheie",
+    "beie",
+    "deie",
+    "ieie",
+    "leie",
+    "teie"
+  ],
+  "concluzie": [
+    "poezie",
+    "decizie",
+    "ocazie",
+    "precizie",
+    "explozie",
+    "recenzie"
+  ],
+  "corupție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "câine": [
+    "mâine",
+    "haine",
+    "taine",
+    "poimâine",
+    "faine",
+    "răspoimâine"
+  ],
+  "dezlănțui": [
+    "zbănțui",
+    "înlănțui"
+  ],
+  "dezvălui": [
+    "lui",
+    "anului",
+    "statului",
+    "orașului",
+    "celui",
+    "domnului"
+  ],
+  "dialectică": [
+    "adică",
+    "politică",
+    "mică",
+    "publică",
+    "muzică",
+    "biserică"
+  ],
+  "doctor": [
+    "director",
+    "ajutor",
+    "altor",
+    "autor",
+    "multor",
+    "următor"
+  ],
+  "dăinui": [
+    "unui",
+    "nimănui",
+    "continui",
+    "vreunui",
+    "niciunui",
+    "destăinui"
+  ],
+  "echilibru": [
+    "membru",
+    "celebru",
+    "calibru",
+    "timbru",
+    "zimbru",
+    "sumbru"
+  ],
+  "fasole": [
+    "articole",
+    "agricole",
+    "spectacole",
+    "secole",
+    "cole",
+    "capitole"
+  ],
+  "femeie": [
+    "zmeie",
+    "întemeie",
+    "beie",
+    "deie",
+    "ieie",
+    "leie"
+  ],
+  "flacără": [
+    "fără",
+    "numără",
+    "tânără",
+    "cumpără",
+    "tabără",
+    "apără"
+  ],
+  "graniță": [
+    "fetiță",
+    "actriță",
+    "grădiniță",
+    "viță",
+    "călugăriță",
+    "zeiță"
+  ],
+  "haos": [
+    "adaos",
+    "repaos"
+  ],
+  "iepure": [
+    "asigure",
+    "singure",
+    "dure",
+    "sigure",
+    "alăture",
+    "fure"
+  ],
+  "iluzie": [
+    "poezie",
+    "decizie",
+    "ocazie",
+    "precizie",
+    "explozie",
+    "recenzie"
+  ],
+  "imperiu": [
+    "propriu",
+    "teritoriu",
+    "scenariu",
+    "obligatoriu",
+    "salariu",
+    "comentariu"
+  ],
+  "imuabil": [
+    "probabil",
+    "posibil",
+    "imposibil",
+    "responsabil",
+    "capabil",
+    "incredibil"
+  ],
+  "indescifrabil": [
+    "probabil",
+    "posibil",
+    "imposibil",
+    "responsabil",
+    "capabil",
+    "incredibil"
+  ],
+  "inducție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "inefabil": [
+    "probabil",
+    "posibil",
+    "imposibil",
+    "responsabil",
+    "capabil",
+    "incredibil"
+  ],
+  "inimă": [
+    "maximă",
+    "primă",
+    "exprimă",
+    "ultimă",
+    "crimă",
+    "victimă"
+  ],
+  "intrigă": [
+    "câștigă",
+    "strigă",
+    "ligă",
+    "obligă",
+    "mămăligă",
+    "aprigă"
+  ],
+  "introspecție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "irevocabil": [
+    "probabil",
+    "posibil",
+    "imposibil",
+    "responsabil",
+    "capabil",
+    "incredibil"
+  ],
+  "lămâie": [
+    "mângâie",
+    "tămâie",
+    "scârțâie",
+    "mâie",
+    "rămâie",
+    "alămâie"
+  ],
+  "lăuntric": [
+    "istoric",
+    "eric",
+    "electric",
+    "categoric",
+    "generic",
+    "folcloric"
+  ],
+  "memorie": [
+    "noiembrie",
+    "decembrie",
+    "octombrie",
+    "septembrie",
+    "ianuarie",
+    "februarie"
+  ],
+  "metafizică": [
+    "adică",
+    "politică",
+    "mică",
+    "publică",
+    "muzică",
+    "biserică"
+  ],
+  "morcov": [
+    "roșcov",
+    "țușcov"
+  ],
+  "mână": [
+    "până",
+    "română",
+    "săptămână",
+    "rămână",
+    "lână",
+    "bătrână"
+  ],
+  "măr": [
+    "număr",
+    "umăr",
+    "enumăr"
+  ],
+  "neliniște": [
+    "niște",
+    "privește",
+    "găsește",
+    "vorbește",
+    "folosește",
+    "numește"
+  ],
+  "ordine": [
+    "bine",
+    "mine",
+    "cine",
+    "tine",
+    "vine",
+    "devine"
+  ],
+  "pasăre": [
+    "dunăre",
+    "mazăre",
+    "lagăre",
+    "ivăre",
+    "cațăre",
+    "licăre"
+  ],
+  "perisabil": [
+    "probabil",
+    "posibil",
+    "imposibil",
+    "responsabil",
+    "capabil",
+    "incredibil"
+  ],
+  "plânge": [
+    "ajunge",
+    "sânge",
+    "atinge",
+    "convinge",
+    "învinge",
+    "strânge"
+  ],
+  "puternic": [
+    "tehnic",
+    "britanic",
+    "unic",
+    "electronic",
+    "zilnic",
+    "mecanic"
+  ],
+  "pâine": [
+    "mâine",
+    "haine",
+    "taine",
+    "poimâine",
+    "faine",
+    "răspoimâine"
+  ],
+  "păr": [
+    "cumpăr",
+    "descopăr",
+    "apăr",
+    "supăr",
+    "acopăr",
+    "calapăr"
+  ],
+  "refugiu": [
+    "subterfugiu"
+  ],
+  "roșie": [
+    "cenușie",
+    "moșie",
+    "fâșie",
+    "sfâșie",
+    "duioșie",
+    "voioșie"
+  ],
+  "râde": [
+    "surâde",
+    "gâde",
+    "hâde"
+  ],
+  "sacrificiu": [
+    "serviciu",
+    "oficiu",
+    "indiciu",
+    "patriciu",
+    "edificiu",
+    "beneficiu"
+  ],
+  "scaun": [
+    "caun",
+    "ceaun",
+    "miaun",
+    "schiaun"
+  ],
+  "sceptru": [
+    "pentru",
+    "nostru",
+    "patru",
+    "centru",
+    "ministru",
+    "teatru"
+  ],
+  "scânteie": [
+    "teie",
+    "steie",
+    "coteie",
+    "beie",
+    "deie",
+    "ieie"
+  ],
+  "smerenie": [
+    "iunie",
+    "linie",
+    "campanie",
+    "prietenie",
+    "nebunie",
+    "curățenie"
+  ],
+  "străveziu": [
+    "târziu",
+    "cărămiziu"
+  ],
+  "supoziție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "sări": [
+    "țări",
+    "lucrări",
+    "întrebări",
+    "cercetări",
+    "schimbări",
+    "modificări"
+  ],
+  "taină": [
+    "haină",
+    "faină",
+    "cocaină",
+    "doină",
+    "moină",
+    "minioină"
+  ],
+  "temniță": [
+    "fetiță",
+    "actriță",
+    "grădiniță",
+    "viță",
+    "călugăriță",
+    "zeiță"
+  ],
+  "tradiție": [
+    "funcție",
+    "ediție",
+    "atenție",
+    "poliție",
+    "producție",
+    "educație"
+  ],
+  "înfrânge": [
+    "ajunge",
+    "sânge",
+    "atinge",
+    "convinge",
+    "învinge",
+    "strânge"
+  ],
+  "întuneric": [
+    "istoric",
+    "eric",
+    "electric",
+    "categoric",
+    "generic",
+    "numeric"
+  ]
+};
+
+const RHYME_META = { count: 417, hash: "635fe364106e2740d3de28e00a2b82fc61d7e416170f4917c01133d269796e3f" };

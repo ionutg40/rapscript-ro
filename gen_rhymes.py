@@ -22,7 +22,9 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 SRC = ROOT / "assets" / "wordbank.json"
 STRESS_SRC = ROOT / "assets" / "stress.json"   # opțional: {cuvânt: k} (k=nucleu de la final, 0=ultim)
+EXTRA_SRC = ROOT / "assets" / "rhyme_extra.json"  # opțional: {cuvânt: [rime externe]} pt cuvinte sub-deservite (RoLEX)
 OUT = ROOT / "rhymes.js"
+MIN_HINT = 5  # câte sugestii vrem la afișaj (D41); sub atât → backfill din RoLEX
 LEVELS = ("incepator", "avansat", "profesionist")
 
 # litere-vocală (ortografic) → simbol fonetic (â și î colapsează în /ɨ/ = '1')
@@ -133,20 +135,29 @@ def heuristic_from_end(toks):
     return (len(nuc) - 1) - nuc.index(s)
 
 
-def extract_rolex(path, bank_words):
-    """Din RoLEX (col1=formă, col5=formă-cu-accent), derivă override-uri de accent DOAR unde
-    euristica greșește. Accent = nucleul-de-la-final, în termenii nucleelor g2p (un singur alfabet).
-    RoLEX NU se comite (OQ-V2); ieșirea (stress.json, mic) e singurul artefact livrat."""
-    want = set(bank_words)
-    col5_of = {}
+def load_rolex(path):
+    """RoLEX → (forms, form_ph, col5_of). forms = listă (formă, foneme, msd, lemă) pt TOT lexiconul
+    (căutare de sufix); form_ph/col5_of = prima apariție per formă. RoLEX NU se comite (OQ-V2)."""
+    forms, form_ph, col5_of = [], {}, {}
     with open(path, encoding="utf-8") as f:
         for line in f:
-            parts = line.rstrip("\n").split("\t")
-            if len(parts) < 6:
+            p = line.rstrip("\n").split("\t")
+            if len(p) < 6:
                 continue
-            form = parts[0].strip().lower()
-            if form in want and form not in col5_of:
-                col5_of[form] = parts[4]
+            form = p[0].strip().lower()
+            ph = tuple(p[5].split())
+            lemma = p[1].strip().lower()
+            if lemma == "=":      # RoLEX: '=' înseamnă lemă identică cu forma (cuvânt de bază)
+                lemma = form
+            forms.append((form, ph, p[2], lemma))
+            if form not in form_ph:
+                form_ph[form] = ph
+                col5_of[form] = p[4]
+    return forms, form_ph, col5_of
+
+
+def extract_stress(col5_of, bank_words):
+    """Override-uri de accent DOAR unde euristica greșește (accent = nucleu-de-la-final, alfabet g2p)."""
     overrides, missing, skipped = {}, [], []
     for w in sorted(bank_words):
         col5 = col5_of.get(w)
@@ -172,6 +183,54 @@ def extract_rolex(path, bank_words):
         if rolex_fe != heuristic_from_end(toks):
             overrides[w] = rolex_fe
     return overrides, missing, skipped
+
+
+def find_rolex_rhymes(forms, form_ph, w, bank_set, want_n=6, zipf=None):
+    """Rime externe pt un cuvânt: potrivire de sufix fonetic (grad 4 → grad 3), filtrând nume proprii
+    (msd `Np`), flexiuni (aceeași lemă), și cuvintele din bancă. Preferă formele de bază (lemă).
+    Rang (dacă `zipf` dat): cuvinte COMUNE întâi (freq desc); rarele-dar-valide doar ca umplutură —
+    fiindcă corpusul RO al wordfreq e mic, freq=0 NU înseamnă junk (ex. artificiu/ceaun sunt valide)."""
+    ph = form_ph.get(w)
+    if not ph:
+        return []
+    w_lemma = next((lem for (f, p, m, lem) in forms if f == w), w)
+    lemma_of = {}
+    cand_grade = {}
+    for grade in (4, 3):
+        if len(ph) < grade:
+            continue
+        suf = ph[-grade:]
+        for (form, fph, msd, lemma) in forms:
+            if form == w or form in bank_set or msd.startswith("Np") or lemma == w_lemma:
+                continue
+            if len(fph) >= grade and fph[-grade:] == suf:
+                lemma_of[form] = lemma
+                if grade > cand_grade.get(form, 0):
+                    cand_grade[form] = grade
+    if not cand_grade:
+        return []
+    # dedupe pe lemă (preferă forma de bază)
+    best = {}
+    for form in cand_grade:
+        key = lemma_of.get(form, form)
+        if key not in best or form == key:
+            best[key] = form
+    cands = list(best.values())
+    zf = (lambda c: zipf(c, "ro")) if zipf else (lambda c: 0.0)
+    if zipf:
+        known = sorted((c for c in cands if zf(c) >= 2.5), key=lambda c: -zf(c))     # comune, freq desc
+        rare = sorted((c for c in cands if zf(c) < 2.5), key=lambda c: (-cand_grade[c], len(c), c))
+        ordered = known + rare
+    else:
+        ordered = sorted(cands, key=lambda c: (-cand_grade[c], len(c), c))
+    return ordered[:want_n]
+
+
+def load_extra():
+    if not EXTRA_SRC.exists():
+        return {}
+    raw = json.loads(EXTRA_SRC.read_text(encoding="utf-8"))
+    return {str(k): list(v) for k, v in raw.items()}
 
 
 def build(bank, stress):
@@ -208,8 +267,8 @@ def build(bank, stress):
     return index, keys, stats
 
 
-def canonical_hash(index, keys):
-    canon = json.dumps({"i": index, "k": keys}, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+def canonical_hash(index, keys, extra):
+    canon = json.dumps({"i": index, "k": keys, "e": extra}, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()
 
 
@@ -221,42 +280,63 @@ def read_existing_hash():
     return m.group(1) if m else None
 
 
-def render_js(index, keys, stress, h):
+def render_js(index, keys, stress, extra, h):
     idx_body = json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True)
     keys_body = json.dumps(keys, ensure_ascii=False, indent=2, sort_keys=True)
     # doar override-urile pt cuvinte din bancă — JS le aplică identic (paritate g2p+accent)
     stress_body = json.dumps({w: stress[w] for w in sorted(stress) if w in keys}, ensure_ascii=False, sort_keys=True)
+    extra_body = json.dumps({w: extra[w] for w in sorted(extra) if w in keys}, ensure_ascii=False, indent=2, sort_keys=True)
     return (
-        "// AUTO-GENERAT din wordbank.json (+ assets/stress.json) — NU EDITA (rulează: python gen_rhymes.py)\n"
+        "// AUTO-GENERAT din wordbank.json (+ assets/stress.json, assets/rhyme_extra.json) — NU EDITA (python gen_rhymes.py)\n"
         "// RHYME_INDEX: cheie_rimă → [cuvinte]. RHYME_KEYS: cuvânt → {p:perfect, a:asonanță, n:silabe}.\n"
-        "// RHYME_STRESS: cuvânt → nucleu accentuat (de la final) — override-uri de accent (RoLEX), pt paritate JS.\n"
+        "// RHYME_STRESS: cuvânt → nucleu accentuat (override accent RoLEX, paritate JS).\n"
+        "// RHYME_EXTRA: cuvânt → rime externe (RoLEX) pt cele sub-deservite în bancă (grad 4→3).\n"
         f"const RHYME_INDEX = {idx_body};\n\n"
         f"const RHYME_KEYS = {keys_body};\n\n"
         f"const RHYME_STRESS = {stress_body};\n\n"
+        f"const RHYME_EXTRA = {extra_body};\n\n"
         f"const RHYME_META = {{ count: {len(keys)}, hash: \"{h}\" }};\n"
     )
 
 
 def main():
     bank = load_levels()
+    all_words = [w for ws in bank.values() for w in ws]
 
-    # --from-rolex PATH: derivă assets/stress.json din RoLEX (o dată / când crește banca).
-    # RoLEX NU se comite; doar stress.json (override-uri unde euristica greșește) e livrat.
+    # --from-rolex PATH: derivă assets/stress.json + assets/rhyme_extra.json din RoLEX (o dată / când
+    # crește banca). RoLEX (24MB) NU se comite (OQ-V2); doar cele 2 fișiere derivate (mici) sunt livrate.
     if "--from-rolex" in sys.argv:
         path = sys.argv[sys.argv.index("--from-rolex") + 1]
-        all_words = [w for ws in bank.values() for w in ws]
-        overrides, missing, skipped = extract_rolex(path, all_words)
+        forms, form_ph, col5_of = load_rolex(path)
+        # 1) accent
+        overrides, missing, skipped = extract_stress(col5_of, all_words)
         STRESS_SRC.write_text(json.dumps(overrides, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        print(f"OK: stress.json — {len(overrides)} override-uri (euristica greșea) · "
-              f"{len(missing)} negăsite în RoLEX · {len(skipped)} sărite (aliniere).")
-        if overrides:
-            s = sorted(overrides)
-            print("   corectate:", ", ".join(s[:24]) + (" …" if len(s) > 24 else ""))
-        # cade spre regenerarea normală (care folosește noul stress.json)
+        print(f"OK: stress.json — {len(overrides)} override-uri · {len(missing)} negăsite · {len(skipped)} sărite (aliniere).")
+        # 2) backfill rime externe pt cuvinte sub-deservite (< MIN_HINT rime în bancă)
+        try:
+            from wordfreq import zipf_frequency as zipf  # rang după frecvență (comunele întâi)
+        except ImportError:
+            zipf = None
+            print("  ⚠ wordfreq lipsește — fără rang de frecvență (mai mult zgomot). venv: ~/.venvs/rapscript")
+        idx0, keys0, _ = build(bank, load_stress())
+        bank_set = set(all_words)
+        extra = {}
+        for w in sorted(keys0):
+            have = {x for x in (idx0["perfect"].get(keys0[w]["p"], []) + idx0["asonanta"].get(keys0[w]["a"], [])) if x != w}
+            if len(have) >= MIN_HINT:
+                continue
+            rl = [r for r in find_rolex_rhymes(forms, form_ph, w, bank_set, zipf=zipf) if r not in have]
+            if rl:
+                extra[w] = rl
+        EXTRA_SRC.write_text(json.dumps(extra, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"OK: rhyme_extra.json — {len(extra)} cuvinte sub-deservite primesc rime din RoLEX "
+              f"(ex. sceptru: {', '.join(extra.get('sceptru', [])[:4]) or '—'}).")
+        # cade spre regenerarea normală (folosește noile stress.json + rhyme_extra.json)
 
     stress = load_stress()
+    extra = load_extra()
     index, keys, stats = build(bank, stress)
-    h = canonical_hash(index, keys)
+    h = canonical_hash(index, keys, extra)
 
     if stats["no_vowel"]:
         raise SystemExit(f"EROARE: cuvinte fără vocală (G2P degenerat): {stats['no_vowel']}")
@@ -268,21 +348,20 @@ def main():
         if existing != h:
             raise SystemExit(
                 "CHECK FAIL: rhymes.js e STALE (hash diferă).\n"
-                "  Cauză: wordbank.json/stress.json editate fără regenerare, SAU algoritm schimbat, SAU rhymes.js editat de mână.\n"
+                "  Cauză: wordbank.json/stress.json/rhyme_extra.json editate fără regenerare, SAU algoritm schimbat.\n"
                 "  Fix: python gen_rhymes.py"
             )
         print(f"CHECK OK: rhymes.js e fresh ({stats['count']} cuvinte, hash {h[:12]}…).")
         return
 
-    OUT.write_text(render_js(index, keys, stress, h), encoding="utf-8")
-    print(f"OK: rhymes.js scris — {stats['count']} cuvinte · "
-          f"{stats['perfect_groups']} grupuri perfecte · "
-          f"{stats['heuristic_stress']} accente heuristice · hash {h[:12]}…")
-    if stats["orphans"]:
-        print(f"⚠  {len(stats['orphans'])} ORFANE (nicio rimă nici perfect nici asonanță) — "
-              f"vor arăta „fără rime” în UI:\n   {', '.join(stats['orphans'])}")
+    OUT.write_text(render_js(index, keys, stress, extra, h), encoding="utf-8")
+    true_orphans = [w for w in stats["orphans"] if w not in extra]
+    print(f"OK: rhymes.js scris — {stats['count']} cuvinte · {stats['perfect_groups']} grupuri perfecte · "
+          f"{stats['heuristic_stress']} accente heuristice · {len(extra)} cu backfill RoLEX · hash {h[:12]}…")
+    if true_orphans:
+        print(f"⚠  {len(true_orphans)} încă orfane (nici bancă, nici RoLEX): {', '.join(true_orphans)}")
     else:
-        print("✓ zero orfane totale (fiecare cuvânt are cel puțin o rimă/asonanță).")
+        print("✓ zero orfane (fiecare cuvânt are rime — din bancă sau RoLEX).")
 
 
 if __name__ == "__main__":

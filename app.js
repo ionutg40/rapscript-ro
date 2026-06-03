@@ -373,17 +373,20 @@ function rhymeKeysFor(word) {
   };
 }
 
-// rime pentru un cuvânt: bank → RHYME_KEYS (canonic, respectă stress.json); altfel → G2P runtime
+// rime pentru un cuvânt: bank → RHYME_KEYS (canonic, respectă stress.json); altfel → G2P runtime.
+// extra = rime externe (RoLEX) pt cuvintele sub-deservite în bancă (backfill la 5, D27/OQ-V3).
 function rhymesFor(raw) {
   const norm = String(raw || '').trim().toLowerCase().normalize('NFC');
-  if (!norm) return { empty: true, perfect: [], near: [] };
-  if (typeof RHYME_INDEX === 'undefined') return { empty: false, perfect: [], near: [] };
+  if (!norm) return { empty: true, perfect: [], near: [], extra: [] };
+  if (typeof RHYME_INDEX === 'undefined') return { empty: false, perfect: [], near: [], extra: [] };
   const keys = (typeof RHYME_KEYS !== 'undefined' && RHYME_KEYS[norm]) ? RHYME_KEYS[norm] : rhymeKeysFor(norm);
-  if (!keys) return { empty: false, perfect: [], near: [] };
+  if (!keys) return { empty: false, perfect: [], near: [], extra: [] };
   const perfect = (RHYME_INDEX.perfect[keys.p] || []).filter((w) => w !== norm);
   const seen = new Set(perfect);
   const near = (RHYME_INDEX.asonanta[keys.a] || []).filter((w) => w !== norm && !seen.has(w));
-  return { empty: false, perfect: perfect, near: near };
+  near.forEach((w) => seen.add(w));
+  const extra = (typeof RHYME_EXTRA !== 'undefined' && RHYME_EXTRA[norm] ? RHYME_EXTRA[norm] : []).filter((w) => !seen.has(w));
+  return { empty: false, perfect: perfect, near: near, extra: extra };
 }
 
 const RHYME_HINT_N = 5; // câte rime ambientale arătăm sus pt cuvântul curent
@@ -392,7 +395,7 @@ const RHYME_HINT_N = 5; // câte rime ambientale arătăm sus pt cuvântul curen
 function updateRhymeHint(word) {
   if (!rhymeHintEl) return;
   const r = rhymesFor(word);
-  const five = r.perfect.concat(r.near).slice(0, RHYME_HINT_N);
+  const five = r.perfect.concat(r.near).concat(r.extra).slice(0, RHYME_HINT_N);
   rhymeHintEl.replaceChildren();
   for (const w of five) {
     const s = document.createElement('span');
