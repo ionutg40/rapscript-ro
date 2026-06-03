@@ -310,6 +310,16 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   comercial. (G2P-ul e reguli proprii în Python/JS, nu espeak/RoLEX.)
 - **OQ-V3 ✅ REZOLVAT (2026-06-03, D42):** hibrid — banca proprie prima, backfill din RoLEX (grad 4→3,
   filtrat de frecvență wordfreq) pt cuvintele sub-deservite. Implementat în `rhyme_extra.json`.
+
+- **OQ-V6 (task viitor — owner):** **plafon pe totalul băncii.** Calea de adăugare („adaugă" → Worker →
+  wordbank.json) NU are limită de total. De adăugat: gardă în **Worker** (respinge dacă total ≥ N) +
+  backstop în `gen_words.py`/CI (validare total ≤ N → CI roșu). Client: dezactivează „adaugă" la limită
+  (doar UX, ocolibil). Limita N = de stabilit. _(Vocea NU adaugă în bancă — verificat; doar afișaj tranzitoriu.)_
+
+- **OQ-V7 (notă — cuvinte adăugate × rime):** rimele FUNCȚIONEAZĂ pe cuvinte adăugate via G2P runtime
+  (găsesc rime în bancă imediat). Limite până la regenerarea `rhymes.js` (CI, după commit prin Worker):
+  (a) relație într-un sens (cuvintele vechi nu-l listează pe cel nou ca rimă); (b) fără backfill RoLEX
+  pt cuvântul nou până la re-rulare `--from-rolex`. Ambele se rezolvă la următorul CI regen / re-extract.
 - **OQ-V4:** doar rime perfecte sau și slant/asonanță? Recomandare: cascadă 3-tier (D37); MVP
   perfect+asonanță, slant complet în 8.4.
 - **OQ-V5 ✅ REZOLVAT (2026-06-03):** rima **SE SUPRAPUNE** peste generator — top-5 rime ambientale apar
