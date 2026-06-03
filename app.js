@@ -30,7 +30,7 @@ const state = {
 };
 
 // ---- Refs DOM (cache o dată) ----
-let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill;
+let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill, rhymeHintEl;
 let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
@@ -118,6 +118,7 @@ function render() {
     void wordEl.offsetWidth; // reflow → retrigger animația
     wordEl.classList.add('is-entering');
     prevWord = state.word;
+    updateRhymeHint(state.word); // rime ambientale sus — se schimbă odată cu cuvântul (Epic 7)
   }
   timerFill.style.setProperty('--interval', state.intervalMs + 'ms');
 
@@ -316,11 +317,95 @@ function updateViewerCount() {
   openViewerBtn.textContent = 'vezi cuvintele (' + (WORD_BANK[state.level].length + sessionAdded[state.level].length) + ')';
 }
 
+// ---- Epic 7: motor de rimă ----
+// G2P pur — OGLINDA EXACTĂ a gen_rhymes.py (paritate verificată în ?test=1). Dacă diverg → testul pică.
+const RO_VOWEL = { 'a': 'a', 'ă': '@', 'â': '1', 'î': '1', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u' };
+const RO_CONS = {
+  'ș': 'S', 'ş': 'S', 'ț': 'T', 'ţ': 'T', 'j': 'Z',
+  'b': 'b', 'd': 'd', 'f': 'f', 'h': 'h', 'k': 'k', 'l': 'l', 'm': 'm',
+  'n': 'n', 'p': 'p', 'r': 'r', 's': 's', 't': 't', 'v': 'v', 'z': 'z',
+  'q': 'k', 'w': 'v', 'y': 'i',
+};
+
+// cuvânt RO (lowercase) → [[sym, eVocală], …]. Reguli context-sensitive (D28).
+function g2p(word) {
+  const toks = [];
+  const n = word.length;
+  let i = 0;
+  while (i < n) {
+    const c = word[i];
+    const nxt = i + 1 < n ? word[i + 1] : '';
+    if (c === 'c') {
+      if (nxt === 'h') { toks.push(['k', false]); i += 2; continue; }      // ch → /k/
+      if (nxt === 'e' || nxt === 'i') { toks.push(['tS', false]); i += 1; continue; } // ce/ci → /tʃ/
+      toks.push(['k', false]); i += 1; continue;
+    }
+    if (c === 'g') {
+      if (nxt === 'h') { toks.push(['g', false]); i += 2; continue; }      // gh → /g/
+      if (nxt === 'e' || nxt === 'i') { toks.push(['dZ', false]); i += 1; continue; } // ge/gi → /dʒ/
+      toks.push(['g', false]); i += 1; continue;
+    }
+    if (c === 'x') { toks.push(['k', false]); toks.push(['s', false]); i += 1; continue; } // x → /ks/
+    if (RO_VOWEL[c]) { toks.push([RO_VOWEL[c], true]); i += 1; continue; }
+    toks.push([RO_CONS[c] || c, false]); i += 1;
+  }
+  // -i final palatalizat (lupi /lupʲ/): după consoană → marcaj, nu nucleu
+  const L = toks.length;
+  if (L >= 2 && toks[L - 1][0] === 'i' && toks[L - 1][1] && !toks[L - 2][1]) toks[L - 1] = ['j', false];
+  return toks;
+}
+
+// cheile de rimă pt un cuvânt arbitrar (fără override de accent — bank-ul folosește RHYME_KEYS)
+function rhymeKeysFor(word) {
+  const toks = g2p(word);
+  const nuc = [];
+  for (let k = 0; k < toks.length; k++) if (toks[k][1]) nuc.push(k);
+  if (!nuc.length) return null;
+  let s;
+  if (toks[toks.length - 1][1]) s = nuc.length >= 2 ? nuc[nuc.length - 2] : nuc[nuc.length - 1];
+  else s = nuc[nuc.length - 1];
+  const tail = toks.slice(s);
+  return {
+    p: tail.map((t) => t[0]).join('.'),                     // perfect: toate fonemele de la accent
+    a: tail.filter((t) => t[1]).map((t) => t[0]).join('.'), // asonanță: doar vocalele
+  };
+}
+
+// rime pentru un cuvânt: bank → RHYME_KEYS (canonic, respectă stress.json); altfel → G2P runtime
+function rhymesFor(raw) {
+  const norm = String(raw || '').trim().toLowerCase().normalize('NFC');
+  if (!norm) return { empty: true, perfect: [], near: [] };
+  if (typeof RHYME_INDEX === 'undefined') return { empty: false, perfect: [], near: [] };
+  const keys = (typeof RHYME_KEYS !== 'undefined' && RHYME_KEYS[norm]) ? RHYME_KEYS[norm] : rhymeKeysFor(norm);
+  if (!keys) return { empty: false, perfect: [], near: [] };
+  const perfect = (RHYME_INDEX.perfect[keys.p] || []).filter((w) => w !== norm);
+  const seen = new Set(perfect);
+  const near = (RHYME_INDEX.asonanta[keys.a] || []).filter((w) => w !== norm && !seen.has(w));
+  return { empty: false, perfect: perfect, near: near };
+}
+
+const RHYME_HINT_N = 5; // câte rime ambientale arătăm sus pt cuvântul curent
+
+// rime ambientale: top-N pt cuvântul de pe ecran, gri-umbră sus. Apelat din render() la schimbare.
+function updateRhymeHint(word) {
+  if (!rhymeHintEl) return;
+  const r = rhymesFor(word);
+  const five = r.perfect.concat(r.near).slice(0, RHYME_HINT_N);
+  rhymeHintEl.replaceChildren();
+  for (const w of five) {
+    const s = document.createElement('span');
+    s.className = 'rhyme-hint__w';
+    s.textContent = w;
+    rhymeHintEl.appendChild(s);
+  }
+}
+
 // ---- Boot ----
 function boot() {
   wordEl = byId('hero-word'); messageEl = byId('message'); playBtn = byId('btn-play-pause');
   speedSlider = byId('speed-slider'); speedValueEl = byId('speed-value'); levelSegmentsEl = byId('level-segments');
   fullscreenBtn = byId('btn-fullscreen'); timerFill = byId('timer-fill');
+  rhymeHintEl = byId('rhyme-hint'); // opțional — updateRhymeHint guard-uiește dacă lipsește
   if (![wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill].every(Boolean)) {
     console.error('Refs DOM lipsă'); return; // guard refs
   }
@@ -369,6 +454,13 @@ function boot() {
     addBtn.addEventListener('click', handleAddWord);
     addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddWord(); });
   }
+
+  // Epic 7: index de rime pt sugestiile ambientale (D41) — fail-loud dacă lipsește
+  if (typeof RHYME_INDEX === 'undefined') {
+    console.error('RHYME_INDEX lipsește — sugestiile de rimă nu vor apărea.');
+  } else {
+    console.log('rime:', RHYME_META.count, 'cuvinte · hash', String(RHYME_META.hash).slice(0, 8));
+  }
 }
 
 // ---- Teste funcții pure (?test=1, fără Node — D11) ----
@@ -384,6 +476,29 @@ function runTests() {
   let rep = 0;
   for (let i = 0; i < 300; i++) if (pickWord(['a', 'b', 'c', 'd', 'e'], 'a') === 'a') rep++;
   ok('pickWord no-immediate-repeat', rep === 0);
+
+  // Epic 7: paritate G2P JS↔Python — fiecare cuvânt din bancă trebuie să dea EXACT cheile din rhymes.js
+  if (typeof RHYME_KEYS !== 'undefined') {
+    let mism = 0, checked = 0;
+    for (const w in RHYME_KEYS) {
+      checked++;
+      const k = rhymeKeysFor(w);
+      if (!k || k.p !== RHYME_KEYS[w].p || k.a !== RHYME_KEYS[w].a) {
+        mism++;
+        if (mism <= 5) console.warn('paritate G2P mismatch:', w, '→ JS', k, 'vs PY', RHYME_KEYS[w]);
+      }
+    }
+    ok('G2P paritate JS↔Python (' + checked + ' cuvinte)', mism === 0);
+  } else {
+    ok('rhymes.js încărcat', false);
+  }
+  // semantic: rima reală + robustețe pe necunoscut
+  if (typeof RHYME_INDEX !== 'undefined') {
+    ok('rimă: lumină → conține albină', rhymesFor('lumină').perfect.includes('albină'));
+    ok('rimă: cuvânt necunoscut nu crapă', rhymesFor('zzqxw').perfect.length === 0);
+    ok('rimă: gol → empty', rhymesFor('').empty === true);
+  }
+
   const failed = out.filter(r => r.startsWith('FAIL'));
   console.log('%c?test=1', 'font-weight:bold'); out.forEach(r => console.log(r));
   console.log(failed.length ? `❌ ${failed.length} pică` : `✅ toate ${out.length} trec`);

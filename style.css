@@ -30,6 +30,7 @@
   --color-ink-dim: #9A9AA6;
   --color-accent: #8B7BFF;
   --color-danger: #F0717A;
+  --color-ink-faint: #5A5A66;
   --space-md: 16px;
   --radius-md: 10px;
 }
@@ -178,6 +179,7 @@ body.is-fullscreen .hero { padding-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   .hero-word.is-entering { animation: none; }
   .timer-bar__fill { animation: none; transform: scaleX(0); }
+  .rhyme-hint__w { animation: none; }
 }
 
 /* ---- Epic 6: viewer drawer + add ---- */
@@ -259,3 +261,23 @@ body.is-fullscreen .hero { padding-bottom: 0; }
 .token-row summary { cursor: pointer; padding: 6px 0; }
 .token-body { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
 .token-help { font-size: 12px; color: var(--color-ink-faint, #5A5A66); margin: 4px 0 0; width: 100%; }
+
+/* ---- Epic 7: rime ambientale (sus, gri-umbră, pt cuvântul curent) ---- */
+.rhyme-hint {
+  position: absolute;
+  top: clamp(16px, 8vh, 84px);
+  left: 0; right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 20px;
+  padding: 0 var(--space-md);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: clamp(13px, 2.4vw, 18px);
+  letter-spacing: 0.08em;
+  color: var(--color-ink-faint);   /* umbra: gri discret, nu fură atenția de la cuvânt */
+  pointer-events: none;
+  user-select: none;
+}
+.rhyme-hint__w { white-space: nowrap; animation: hint-in 240ms ease-out; }
+@keyframes hint-in { from { opacity: 0; } to { opacity: 1; } }

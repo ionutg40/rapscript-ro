@@ -9,6 +9,8 @@
 </head>
 <body>
   <main class="stage">
+    <!-- rime ambientale: 5 sugestii sus, gri-umbră, pt cuvântul curent (Epic 7 / S3) -->
+    <div id="rhyme-hint" class="rhyme-hint" aria-hidden="true"></div>
     <div class="hero">
       <h1 id="hero-word" class="hero-word" tabindex="-1">–</h1>
       <div class="timer-bar" aria-hidden="true"><div id="timer-fill" class="timer-bar__fill"></div></div>
@@ -49,10 +51,12 @@
         <div id="turnstile-host"></div>
       </div>
     </div>
+
   </main>
 
-  <!-- banca prin <script> (NU fetch — CORS pe file://, D2), ÎNAINTE de app.js -->
+  <!-- banca + index de rime prin <script> (NU fetch — CORS pe file://, D2), ÎNAINTE de app.js -->
   <script src="words.js"></script>
+  <script src="rhymes.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
