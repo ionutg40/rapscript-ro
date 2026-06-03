@@ -196,8 +196,8 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   **Recomandarea arhitecturii:** **PRIMAR A (Web Speech), HTTPS-gated, NU cale obligatorie (D32)** →
   `file://` + restul app-ului intacte. **Fallback D38 (Groq via Worker)** pt Firefox/iOS/erori rețea.
   **B amânat** ca opt-in privacy. **C** doar dacă A se dovedește insuficient pe acuratețe/control. **D**
-  eliminat. **Owner-ul (fasty) n-a decis încă** între „păstrez file://+privacy" / „Whisper local" /
-  „cloud pt viteză". Decizia ÎNGHEAȚĂ Epic 8. _(Nimic din Epic 7 nu depinde de ea.)_
+  eliminat. **✅ DECIS (2026-06-03): A (Web Speech `ro-RO`)** — Epic 8 v1 LIVRAT. Whisper (B) respins
+  explicit de owner; C = tier premium condiționat (D40). _(Nimic din Epic 7 nu a depins de ea.)_
 
 - **D36 ▲ NEW — [CEA MAI IMPORTANTĂ] Snap ieșirea ASR la cel mai apropiat cuvânt din banca de 417,
   ÎNAINTE de afișare/lookup.** Cel mai mare risc nu e latența — e **acuratețea ASR pe rap spontan**
@@ -330,14 +330,18 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   - 7.4 gotcha-uri RO (`â/î`, `ce/ci`, `ge/gi`, `che/ghe`, `-i` final) verificate cu `?test=1`.
   - *Cut din MVP:* mic, VAD, selector limbă, cascadă slant completă (livrezi perfect+asonanță), Whisper.
 
-- **Epic 8 — Intrare vocală (BLOCAT pe D31 → recomandare cloud-primar):**
-  - 8.1 adapter Web Speech (`ro-RO`, interim-fire D34) → **fuzzy-snap pe bancă (D36)** → pre-completează
-    inputul 7.3.
-  - 8.2 `@ricky0123/vad-web` tunat (D38) + push-to-talk (D39) + feature-detect/degradare (D32) +
-    `<select>` limbă (D33).
-  - 8.3 fail-loud pe HTTPS lipsă / Firefox / permisiune refuzată / cădere rețea + disclosure privacy (D39).
-  - 8.4 *(deferred)* cascadă slant/asonanță 3-tier completă; **fallback Groq via Worker (D38)**; mod
-    privacy Whisper-WASM opt-in (D31-B); *(doar path C)* proxy Hetzner Chirp (D35).
+- **Epic 8 — Intrare vocală (D31=A) — v1 LIVRAT (2026-06-03):**
+  - 8.1 ✅ Web Speech (`ro-RO`, `interimResults`/`continuous`, D34) → **fuzzy-snap pe bancă (D36)**
+    (Levenshtein insensibil la diacritice, prag ~34% → snap; sub prag → cuvântul brut via G2P) → cuvântul
+    rostit devine cuvântul central (D41), rimele ambientale îl urmează.
+  - 8.2 ✅ push-to-talk: **ține apăsat `M`** (Fn/Win+H NU se pot capta în browser — taste hardware/OS) +
+    buton 🎤 toggle; feature-detect `isSecureContext` + Web Speech (D32) → ascuns pe file:///Firefox/iOS.
+  - 8.3 ✅ fail-loud pe permisiune/no-speech/network/nesuportat + disclosure „audio → Google" (D39);
+    pornirea mic-ului oprește generatorul auto.
+  - 8.4 *(deferred)* `@ricky0123/vad-web` + selector limbă (D33); **fallback Groq via Worker (D38)** pt
+    Firefox/iOS; mod privacy Whisper-WASM (D31-B); *(path C)* proxy Hetzner Chirp (D35).
+  - ⚠ **De testat de owner pe Chrome live (HTTPS):** permisiune mic + acuratețe ASR RO pe rap rapid
+    (gate D36, 20+ cuvinte). Până acum verificat doar logica (snap/flux, prin simulare `onresult`).
 
 **Dependency:** Epic 7 → Epic 8. Epic 7 nu așteaptă nicio decizie.
 

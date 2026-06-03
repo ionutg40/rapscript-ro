@@ -27,10 +27,12 @@ const state = {
   playing: false,
   error: false,
   errorMessage: '',
+  listening: false, // Epic 8: microfon activ
+  micMsg: '',       // status microfon (afișat în message)
 };
 
 // ---- Refs DOM (cache o dată) ----
-let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill, rhymeHintEl;
+let wordEl, messageEl, playBtn, speedSlider, speedValueEl, levelSegmentsEl, fullscreenBtn, timerFill, rhymeHintEl, micBtn;
 let openViewerBtn, drawerEl, viewerTitle, viewerList, viewerClose, viewerOverlay, addInput, addBtn, addStatus;
 let levelSegs = [];
 let prevWord = null; // animație-la-schimbare (Epic 5)
@@ -140,7 +142,12 @@ function render() {
     seg.setAttribute('aria-pressed', String(active));
   }
 
-  messageEl.textContent = ''; // controalele arată starea; message = doar loading/error
+  // microfon (Epic 8): butonul reflectă starea; message arată statusul mic (sau gol)
+  if (micBtn) {
+    micBtn.setAttribute('aria-pressed', String(state.listening));
+    document.body.classList.toggle('is-listening', state.listening);
+  }
+  messageEl.textContent = state.micMsg || ''; // controalele arată starea; message = loading/error/mic
   updateViewerCount(); // contorul „vezi cuvintele (N)" pe nivelul curent
   console.assert(state.word !== '', 'render: ready cere un cuvânt');
 }
@@ -162,14 +169,16 @@ function retriggerTimerBar() {
 // ---- Handlere (forma canonică: mutate state → effect helpers → render) ----
 function handleTick() {
   state.word = pickWord(bankFor(state.level), state.word);
+  state.micMsg = ''; // generatorul a luat-o înainte → curăță statusul mic
   render();
   retriggerTimerBar(); // bara repornește pe noul cuvânt
 }
 
 function handlePlayClick() {
   if (!state.ready) return;
+  if (state.listening) stopListening(); // play repornește generatorul → oprește mic-ul
   state.playing = !state.playing;
-  if (state.playing) state.word = pickWord(bankFor(state.level), state.word); // cuvânt nou la play (t=0)
+  if (state.playing) { state.micMsg = ''; state.word = pickWord(bankFor(state.level), state.word); } // cuvânt nou la play (t=0)
   restartTimer();
   render();
   if (state.playing) {
@@ -389,6 +398,87 @@ function rhymesFor(raw) {
   return { empty: false, perfect: perfect, near: near, extra: extra };
 }
 
+// ---- Epic 8: intrare vocală (Web Speech API, D31=A) — cuvântul rostit → cuvântul din centru (D41) ----
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function stripDiacritics(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+function allBankWords() {
+  const out = [];
+  for (const lvl of LEVELS) { out.push.apply(out, WORD_BANK[lvl]); out.push.apply(out, sessionAdded[lvl] || []); }
+  return out;
+}
+
+// fuzzy-snap (D36): cel mai apropiat cuvânt din bancă dacă e suficient de aproape; altfel cuvântul brut.
+// Transformă un ASR cu WER mare pe rap într-un clasificator pe banca închisă (NU rime greșite tăcute).
+function snapToBank(raw) {
+  const word = String(raw || '').trim().toLowerCase().split(/\s+/).pop() || '';
+  if (!word) return '';
+  const wn = stripDiacritics(word);
+  let best = '', bestD = Infinity;
+  for (const b of allBankWords()) {
+    const d = levenshtein(wn, stripDiacritics(b.toLowerCase()));
+    if (d < bestD) { bestD = d; best = b; if (d === 0) break; }
+  }
+  const thresh = Math.max(1, Math.floor(word.length * 0.34));
+  return (best && bestD <= thresh) ? best : word;
+}
+
+let recognition = null, micHeld = false;
+function speechSupported() {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition) && window.isSecureContext;
+}
+function getRecognition() {
+  if (recognition) return recognition;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'ro-RO';
+  recognition.interimResults = true; // afișează cuvântul cum îl spui (D34)
+  recognition.continuous = true;
+  recognition.onresult = function (e) {
+    let txt = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) txt = e.results[i][0].transcript;
+    const w = snapToBank(txt);          // D36: snap pe bancă
+    if (w) { state.word = w; state.micMsg = '🎤 „' + w + '"'; render(); } // → cuvânt central → rime ambientale (D41)
+  };
+  recognition.onerror = function (e) {
+    const map = {
+      'not-allowed': 'acces microfon refuzat', 'service-not-allowed': 'microfon indisponibil',
+      'no-speech': 'n-am auzit nimic — reîncearcă', 'audio-capture': 'fără microfon', 'network': 'eroare de rețea',
+    };
+    state.listening = false; state.micMsg = '⚠ ' + (map[e.error] || ('microfon: ' + e.error)); render();
+  };
+  recognition.onend = function () { state.listening = false; render(); };
+  return recognition;
+}
+function startListening() {
+  if (!speechSupported() || state.listening) return;
+  if (state.playing) { state.playing = false; restartTimer(); } // oprește generatorul auto (cuvântul rostit rămâne)
+  try {
+    getRecognition().start();
+    state.listening = true; state.micMsg = '🎤 ascult… (audio → Google)'; render(); // disclosure privacy (D39)
+  } catch (e) { /* deja pornit — ignoră */ }
+}
+function stopListening() {
+  if (!state.listening) return;
+  try { getRecognition().stop(); } catch (e) { /* nimic */ }
+  state.listening = false; render();
+}
+function toggleListening() { if (state.listening) stopListening(); else startListening(); }
+
 const RHYME_HINT_N = 5; // câte rime ambientale arătăm sus pt cuvântul curent
 
 // rime ambientale: top-N pt cuvântul de pe ecran, gri-umbră sus. Apelat din render() la schimbare.
@@ -466,6 +556,27 @@ function boot() {
   } else {
     console.log('rime:', RHYME_META.count, 'cuvinte · hash', String(RHYME_META.hash).slice(0, 8));
   }
+
+  // Epic 8: microfon (D31=A Web Speech) — DOAR pe context securizat + suportat (D32); altfel ascuns
+  micBtn = byId('btn-mic');
+  if (micBtn && speechSupported()) {
+    micBtn.hidden = false;
+    micBtn.addEventListener('click', toggleListening);
+    // push-to-talk: ține apăsat M (Fn/Win+H nu pot fi capturate de browser — tastă hardware/OS)
+    document.addEventListener('keydown', function (e) {
+      if (e.repeat || (e.key || '').toLowerCase() !== 'm') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      micHeld = true; startListening();
+    });
+    document.addEventListener('keyup', function (e) {
+      if ((e.key || '').toLowerCase() !== 'm') return;
+      if (micHeld) { micHeld = false; stopListening(); }
+    });
+    console.log('microfon: Web Speech ro-RO (ține M sau 🎤)');
+  } else if (micBtn) {
+    micBtn.hidden = true; // file:// / Firefox / iOS-Chrome → fără buton mort (D32)
+    console.log('microfon indisponibil (context ne-securizat sau browser nesuportat) — ascuns.');
+  }
 }
 
 // ---- Teste funcții pure (?test=1, fără Node — D11) ----
@@ -502,6 +613,14 @@ function runTests() {
     ok('rimă: lumină → conține albină', rhymesFor('lumină').perfect.includes('albină'));
     ok('rimă: cuvânt necunoscut nu crapă', rhymesFor('zzqxw').perfect.length === 0);
     ok('rimă: gol → empty', rhymesFor('').empty === true);
+  }
+  // Epic 8: fuzzy-snap (D36)
+  ok('levenshtein', levenshtein('sceptru', 'sceptrx') === 1 && levenshtein('abc', 'abc') === 0);
+  if (typeof WORD_BANK !== 'undefined') {
+    ok('snap exact (sceptru)', snapToBank('sceptru') === 'sceptru');
+    ok('snap fuzzy → bancă', snapToBank('libertatea') === 'libertate');
+    ok('snap necunoscut → brut', snapToBank('calculatorxyz') === 'calculatorxyz');
+    ok('snap ia ultimul cuvânt', snapToBank('zic libertate') === 'libertate');
   }
 
   const failed = out.filter(r => r.startsWith('FAIL'));
