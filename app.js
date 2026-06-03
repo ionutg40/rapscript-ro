@@ -224,11 +224,31 @@ function handleLevelClick(e) {
 }
 
 function handleKeydown(e) {
-  if (e.code === 'Space' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
-    e.preventDefault();
-    handlePlayClick();
-  }
   if (e.key === 'Escape' && drawerEl && !drawerEl.hidden) closeViewer();
+}
+
+// Space: tap scurt = play/pause; ținut apăsat = vorbește (push-to-talk, dacă mic-ul e disponibil)
+const PTT_HOLD_MS = 250;
+let pttTimer = null, pttTalking = false;
+function handleSpaceDown(e) {
+  if (e.code !== 'Space' || e.repeat) return;
+  const t = e.target.tagName;
+  if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return; // lasă butonul/inputul focalizat
+  e.preventDefault(); // fără scroll
+  if (speechSupported()) {
+    pttTalking = false;
+    pttTimer = setTimeout(function () { pttTalking = true; startListening(); }, PTT_HOLD_MS);
+  }
+}
+function handleSpaceUp(e) {
+  if (e.code !== 'Space') return;
+  const t = e.target.tagName;
+  if (t === 'BUTTON' || t === 'INPUT' || t === 'TEXTAREA') return;
+  if (speechSupported()) {
+    clearTimeout(pttTimer);
+    if (pttTalking) { pttTalking = false; stopListening(); return; } // a fost ținut → oprește vorbirea
+  }
+  handlePlayClick(); // tap scurt (sau mic indisponibil) → play/pause
 }
 
 // ---- Epic 6: Viewer + Shared Add (prin Cloudflare Worker — tokenul NU e în browser) ----
@@ -437,7 +457,7 @@ function snapToBank(raw) {
   return (best && bestD <= thresh) ? best : word;
 }
 
-let recognition = null, micHeld = false;
+let recognition = null;
 function speechSupported() {
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition) && window.isSecureContext;
 }
@@ -526,6 +546,8 @@ function boot() {
   speedSlider.addEventListener('change', handleSpeedChange);
   levelSegmentsEl.addEventListener('click', handleLevelClick); // delegation
   document.addEventListener('keydown', handleKeydown);
+  document.addEventListener('keydown', handleSpaceDown); // Space: tap=play, ținut=vorbește
+  document.addEventListener('keyup', handleSpaceUp);
 
   // Fullscreen (FR8): feature-detect — ascunde butonul dacă API-ul lipsește (iPhone), nu buton mort
   if (document.documentElement.requestFullscreen) {
@@ -558,21 +580,12 @@ function boot() {
   }
 
   // Epic 8: microfon (D31=A Web Speech) — DOAR pe context securizat + suportat (D32); altfel ascuns
+  // push-to-talk e pe Space (vezi handleSpaceDown/Up); aici doar butonul + feature-detect (D32)
   micBtn = byId('btn-mic');
   if (micBtn && speechSupported()) {
     micBtn.hidden = false;
     micBtn.addEventListener('click', toggleListening);
-    // push-to-talk: ține apăsat M (Fn/Win+H nu pot fi capturate de browser — tastă hardware/OS)
-    document.addEventListener('keydown', function (e) {
-      if (e.repeat || (e.key || '').toLowerCase() !== 'm') return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      micHeld = true; startListening();
-    });
-    document.addEventListener('keyup', function (e) {
-      if ((e.key || '').toLowerCase() !== 'm') return;
-      if (micHeld) { micHeld = false; stopListening(); }
-    });
-    console.log('microfon: Web Speech ro-RO (ține M sau 🎤)');
+    console.log('microfon: Web Speech ro-RO (ține Space sau 🎤; tap Space = play/pauză)');
   } else if (micBtn) {
     micBtn.hidden = true; // file:// / Firefox / iOS-Chrome → fără buton mort (D32)
     console.log('microfon indisponibil (context ne-securizat sau browser nesuportat) — ascuns.');

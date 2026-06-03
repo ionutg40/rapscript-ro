@@ -334,8 +334,10 @@ mic (push-to-talk, D39) · acuratețe ASR pe rap spontan (fuzzy-snap, D36) · su
   - 8.1 ✅ Web Speech (`ro-RO`, `interimResults`/`continuous`, D34) → **fuzzy-snap pe bancă (D36)**
     (Levenshtein insensibil la diacritice, prag ~34% → snap; sub prag → cuvântul brut via G2P) → cuvântul
     rostit devine cuvântul central (D41), rimele ambientale îl urmează.
-  - 8.2 ✅ push-to-talk: **ține apăsat `M`** (Fn/Win+H NU se pot capta în browser — taste hardware/OS) +
-    buton 🎤 toggle; feature-detect `isSecureContext` + Web Speech (D32) → ascuns pe file:///Firefox/iOS.
+  - 8.2 ✅ push-to-talk pe **`Space`**: **tap = play/pauză, ținut (>250ms) = vorbește** (disambiguare
+    tap/hold, ca să nu strice play-ul pe Space). (Fn/Win+H NU se pot capta în browser — taste hardware/OS;
+    de aceea Space, nu Fn.) + buton 🎤 toggle; feature-detect `isSecureContext` + Web Speech (D32) →
+    ascuns pe file:///Firefox/iOS.
   - 8.3 ✅ fail-loud pe permisiune/no-speech/network/nesuportat + disclosure „audio → Google" (D39);
     pornirea mic-ului oprește generatorul auto.
   - 8.4 *(deferred)* `@ricky0123/vad-web` + selector limbă (D33); **fallback Groq via Worker (D38)** pt
