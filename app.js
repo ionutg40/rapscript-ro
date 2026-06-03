@@ -170,6 +170,7 @@ function retriggerTimerBar() {
 function handleTick() {
   state.word = pickWord(bankFor(state.level), state.word);
   state.micMsg = ''; // generatorul a luat-o înainte → curăță statusul mic
+  spokenWordPending = false; // intervalul cuvântului rostit a trecut
   render();
   retriggerTimerBar(); // bara repornește pe noul cuvânt
 }
@@ -178,7 +179,11 @@ function handlePlayClick() {
   if (!state.ready) return;
   if (state.listening) { micWasPlaying = false; stopListening(); } // play manual → oprește mic-ul, fără resume auto dublu
   state.playing = !state.playing;
-  if (state.playing) { state.micMsg = ''; state.word = pickWord(bankFor(state.level), state.word); } // cuvânt nou la play (t=0)
+  if (state.playing) {
+    state.micMsg = '';
+    if (spokenWordPending) spokenWordPending = false; // păstrează cuvântul rostit pt primul interval (nu-l schimba la play)
+    else state.word = pickWord(bankFor(state.level), state.word); // cuvânt nou la play (t=0)
+  }
   restartTimer();
   render();
   if (state.playing) {
@@ -452,28 +457,28 @@ function allBankWords() {
   return out;
 }
 
-// fuzzy-snap (D36): cel mai apropiat cuvânt din bancă dacă e suficient de aproape; altfel cuvântul brut.
-// Transformă un ASR cu WER mare pe rap într-un clasificator pe banca închisă (NU rime greșite tăcute).
+// snap EXACT pe bancă (potrivire cu/fără diacritice → forma curată din bancă); altfel păstrează cuvântul
+// rostit. NU mai facem fuzzy: RoLEX dă rime la orice cuvânt, deci forțarea pe bancă doar strica cuvinte
+// corecte („dans" → „dansa"). ASR-ul greșit rămâne afișat (preferăm cuvântul tău, nu o ghicire de bancă).
 function snapToBank(raw) {
   const word = String(raw || '').trim().toLowerCase().split(/\s+/).pop() || '';
   if (!word) return '';
   const wn = stripDiacritics(word);
-  let best = '', bestD = Infinity;
   for (const b of allBankWords()) {
-    const d = levenshtein(wn, stripDiacritics(b.toLowerCase()));
-    if (d < bestD) { bestD = d; best = b; if (d === 0) break; }
+    if (stripDiacritics(b.toLowerCase()) === wn) return b; // potrivire exactă → forma băncii (cu diacritice corecte)
   }
-  const thresh = Math.max(1, Math.floor(word.length * 0.34));
-  return (best && bestD <= thresh) ? best : word;
+  return word;
 }
 
 let recognition = null;
 let micWasPlaying = false; // generatorul mergea când a pornit mic-ul? → resume automat după ce ia cuvântul
+let spokenWordPending = false; // cuvânt proaspăt rostit, neconsumat de un interval → play îl ține (nu sare)
 // Repornește generatorul după ce mic-ul a luat cuvântul (dacă mergea înainte). Interval PROASPĂT:
 // cuvântul rostit stă tot intervalul stabilit înainte ca generatorul să-l schimbe cu unul din bancă.
 function resumeAfterMic() {
   if (!micWasPlaying) return;
   micWasPlaying = false;
+  spokenWordPending = false; // cuvântul rostit e deja pe ecran; intervalul proaspăt îi dă timpul lui
   state.playing = true;
   restartTimer();        // setInterval nou → primul tick abia după intervalMs (cuvântul rostit nu sare)
   retriggerTimerBar();   // bara repornește de la 0 pe cuvântul rostit
@@ -492,8 +497,8 @@ function getRecognition() {
   recognition.onresult = function (e) {
     let txt = '';
     for (let i = e.resultIndex; i < e.results.length; i++) txt = e.results[i][0].transcript;
-    const w = snapToBank(txt);          // D36: snap pe bancă
-    if (w) { state.word = w; state.micMsg = '🎤 „' + w + '"'; render(); } // → cuvânt central → rime ambientale (D41)
+    const w = snapToBank(txt);          // D36: snap exact pe bancă (sau cuvântul rostit)
+    if (w) { state.word = w; state.micMsg = '🎤 „' + w + '"'; spokenWordPending = true; render(); } // → cuvânt central → rime ambientale (D41)
   };
   recognition.onerror = function (e) {
     if (e.error === 'aborted') { state.listening = false; render(); resumeAfterMic(); return; } // stop normal (.stop()/tab switch) → nu e eroare (P4)
@@ -665,7 +670,7 @@ function runTests() {
   ok('levenshtein', levenshtein('sceptru', 'sceptrx') === 1 && levenshtein('abc', 'abc') === 0);
   if (typeof WORD_BANK !== 'undefined') {
     ok('snap exact (sceptru)', snapToBank('sceptru') === 'sceptru');
-    ok('snap fuzzy → bancă', snapToBank('libertatea') === 'libertate');
+    ok('snap aproape NU se forțează (dans rămâne dans)', snapToBank('libertatea') === 'libertatea');
     ok('snap necunoscut → brut', snapToBank('calculatorxyz') === 'calculatorxyz');
     ok('snap ia ultimul cuvânt', snapToBank('zic libertate') === 'libertate');
   }
